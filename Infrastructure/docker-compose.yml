@@ -53,7 +53,7 @@ services:
     environment:
       QUARKUS_HTTP_PORT: "8080"
       QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/cinema
-      QUARKUS_OIDC_CLIENT_ID: quarkus-app
+      QUARKUS_OIDC_CLIENT_ID: quarkus-api
       QUARKUS_OIDC_CLIENT_SECRET: secret-dev
       QUARKUS_HTTP_CORS: "true"
       QUARKUS_HTTP_CORS_ORIGINS: http://localhost:5173
