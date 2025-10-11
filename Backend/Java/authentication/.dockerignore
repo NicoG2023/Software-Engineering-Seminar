@@ -3,4 +3,8 @@
 !build/*-runner.jar
 !build/lib/*
 !build/quarkus-app/*
-.env
+
+.gradle
+build
+.vscode
+.DS_Store
