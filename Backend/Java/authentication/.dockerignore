@@ -1,10 +1,8 @@
-*
-!build/*-runner
-!build/*-runner.jar
-!build/lib/*
-!build/quarkus-app/*
-
+# Ignorar artefactos y caches
 .gradle
-build
+build/
+
+# IDE / SO
 .vscode
+.idea
 .DS_Store
