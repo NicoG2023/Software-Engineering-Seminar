@@ -1,58 +1,42 @@
-// app/AppLayout.tsx
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+// src/app/AppLayout.tsx
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
+import NavBar from '../components/NavBar';
 import { useAuthStrict } from '../auth/AuthContext';
 
 export default function AppLayout() {
-  const {
-    username,
-    authenticated,
-    login,
-    logout,
-    hasRealmRole,
-  } = useAuthStrict();
+  const { authenticated, hasRealmRole } = useAuthStrict();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const nav = useNavigate();
-  const loc = useLocation();
+  // ¿Es admin?
+  const isAdmin = useMemo(
+    () => authenticated && hasRealmRole('admin'),
+    [authenticated, hasRealmRole]
+  );
 
-  // Chequeo de admin basado en realm role (opción B)
-  const isAdmin = useMemo(() => {
-    return authenticated && hasRealmRole('admin');
-  }, [authenticated, hasRealmRole]);
-
-  // BONUS: si inicia sesión y es admin, envía a /admin (salvo que venga de "from")
+  // BONUS: si inicia sesión y es admin, llévalo a /admin
+  // (respetando navegación previa con state.from)
   useEffect(() => {
     if (!authenticated) return;
 
-    const from = (loc.state as any)?.from?.pathname;
-    if (from) return; // respeta la navegación original
+    const from = (location.state as any)?.from?.pathname;
+    if (from) return;
 
-    if (isAdmin && loc.pathname !== '/admin') {
-      nav('/admin', { replace: true });
+    if (isAdmin && location.pathname !== '/admin') {
+      navigate('/admin', { replace: true });
     }
-  }, [authenticated, isAdmin, loc.pathname, loc.state, nav]);
+  }, [authenticated, isAdmin, location.pathname, location.state, navigate]);
 
   return (
-    <div className="container">
-      <nav style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '8px 0' }}>
-        <Link to="/">Cinema</Link>
+    <div className="min-h-screen bg-[#1E1E1E] text-white">
+      {/* Navbar visible siempre (autenticado o no) */}
+      <NavBar />
 
-        {/* Link a Admin solo si es admin por realm role */}
-        {authenticated && isAdmin && <Link to="/admin">Admin</Link>}
-
-        <div style={{ marginLeft: 'auto' }}>
-          {authenticated ? (
-            <>
-              <span>{username}</span>
-              <button onClick={logout} style={{ marginLeft: 12 }}>Logout</button>
-            </>
-          ) : (
-            <button onClick={login}>Login</button>
-          )}
-        </div>
-      </nav>
-
-      <Outlet />
+      {/* Contenido principal */}
+      <main className="mx-auto max-w-7xl px-6 py-6">
+        <Outlet />
+      </main>
     </div>
   );
 }

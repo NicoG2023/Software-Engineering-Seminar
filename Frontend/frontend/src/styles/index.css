@@ -1,7 +1,8 @@
+/* Tailwind v4 */
 @import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900 font-sans;
-  }
-}
+/* Globales */
+html, body, #root { height: 100%; }
+
+/* Fondo oscuro + texto blanco */
+body { @apply bg-[#1E1E1E] text-white; }
