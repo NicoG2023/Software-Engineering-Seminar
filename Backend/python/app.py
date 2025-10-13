@@ -3,9 +3,7 @@ from database import db
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
 load_dotenv()
-
 app = Flask(__name__)
 
 # ---------------------------
@@ -23,14 +21,22 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
+# ---------------------------
 # Initialize SQLAlchemy
+# ---------------------------
 db.init_app(app)
 
-# Import models after db init
-from models import *
+# ---------------------------
+# Import models and blueprints
+# ---------------------------
+from models import Movie
+from routes.movies import movies_bp
+
+# Register routes
+app.register_blueprint(movies_bp)
 
 # ---------------------------
-# App entry point
+# Entry point
 # ---------------------------
 if __name__ == "__main__":
     with app.app_context():
