@@ -41,7 +41,7 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
     };
   }, [open]);
 
-  const goManageUsers = () => navigate('/admin');
+  const goManageUsers = () => navigate('/users-management');
 
   return (
     <header className="w-full bg-[#1E1E1E]">
@@ -110,7 +110,7 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
                           onClick={goManageUsers}
                           className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333] focus:outline-none"
                         >
-                          Gestionar Usuarios
+                          Manage Users
                         </button>
                         <div className="h-px bg-[#333333]" />
                       </>

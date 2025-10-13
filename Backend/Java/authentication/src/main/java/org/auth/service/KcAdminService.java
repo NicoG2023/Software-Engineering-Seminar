@@ -15,6 +15,7 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import java.io.StringReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +37,7 @@ public class KcAdminService {
     @ConfigProperty(name = "keycloak.admin.client-secret")
     String clientSecret;
 
-    /* This section simply helps other functions to interact with keycloak*/
+    /* =================== helpers =================== */
 
     private String tokenEndpoint() {
         return keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token";
@@ -87,8 +88,7 @@ public class KcAdminService {
                 String body = res.hasEntity() ? res.readEntity(String.class) : "";
                 throw new RuntimeException("Create user failed: " + res.getStatus() + " " + body);
             }
-            // Location header: .../users/{id}
-            String location = res.getHeaderString("Location");
+            String location = res.getHeaderString("Location"); // .../users/{id}
             return location.substring(location.lastIndexOf('/') + 1);
         }
     }
@@ -110,7 +110,7 @@ public class KcAdminService {
     }
 
     /** Search/simple list of users */
-    public List<JsonObject> listUsers(String q, Integer first, Integer max) {
+    public String listUsersRaw(String q, Integer first, Integer max) {
         StringBuilder url = new StringBuilder(adminBase() + "/users");
         List<String> params = new ArrayList<>();
         if (q != null && !q.isBlank()) params.add("search=" + URLEncoder.encode(q, StandardCharsets.UTF_8));
@@ -120,11 +120,40 @@ public class KcAdminService {
 
         try (Response res = authed(url.toString()).get()) {
             if (res.getStatus() != 200) throw new RuntimeException("List users failed: " + res.getStatus());
-            String body = res.readEntity(String.class);
-            try (JsonReader rdr = Json.createReader(new StringReader(body))) {
-                return rdr.readArray().stream()
-                        .map(v -> (JsonObject) v)
-                        .collect(Collectors.toList());
+            return res.readEntity(String.class);
+        }
+    }
+
+    /** Get single user with realm roles injected */
+    public JsonObject getUser(String userId) {
+        String path = adminBase() + "/users/" + userId;
+
+        JsonObject base;
+        try (Response res = authed(path).get()) {
+            if (res.getStatus() != 200) throw new RuntimeException("Get user failed: " + res.getStatus());
+            base = res.readEntity(JsonObject.class);
+        }
+
+        List<String> roles = getUserRealmRoles(userId);
+
+        var ab = Json.createArrayBuilder();
+        for (String r : roles) ab.add(r);
+
+        return Json.createObjectBuilder(base)
+                .add("realmRoles", ab.build())
+                .build();
+    }
+
+    /** Enable/Disable user (partial update is accepted by Keycloak) */
+    public void setEnabled(String userId, boolean enabled) {
+        JsonObject patch = Json.createObjectBuilder()
+                .add("enabled", enabled)
+                .build();
+        String path = adminBase() + "/users/" + userId;
+        try (Response res = authed(path).put(Entity.json(patch))) {
+            if (res.getStatus() != 204) {
+                String body = res.hasEntity() ? res.readEntity(String.class) : "";
+                throw new RuntimeException("Set enabled failed: " + res.getStatus() + " " + body);
             }
         }
     }
@@ -137,6 +166,44 @@ public class KcAdminService {
             if (res.getStatus() != 200) throw new RuntimeException("Role not found: " + roleName);
             return res.readEntity(JsonObject.class);
         }
+    }
+
+    /** Return realm roles (names) assigned to a user */
+    public List<String> getUserRealmRoles(String userId) {
+        String base = adminBase() + "/users/" + userId + "/role-mappings/realm";
+
+        // 1) Intentar el endpoint expandido de compuestos (Keycloak 26+: singular)
+        String pathComposite = base + "/composite";
+        try (Response res = authed(pathComposite).get()) {
+            if (res.getStatus() == 200) {
+                String body = res.readEntity(String.class);
+                try (JsonReader rdr = Json.createReader(new StringReader(body))) {
+                    return rdr.readArray().stream()
+                            .map(v -> ((JsonObject) v).getString("name"))
+                            .collect(Collectors.toList());
+                }
+            } else if (res.getStatus() != 404) {
+                throw new RuntimeException("Get user realm roles (composite) failed: " + res.getStatus());
+            }
+            // si 404, seguimos al fallback
+        }
+
+        // 2) Fallback: roles asignados directamente al realm (sin expandir)
+        try (Response res = authed(base).get()) {
+            if (res.getStatus() != 200) {
+                throw new RuntimeException("Get user realm roles failed: " + res.getStatus());
+            }
+            String body = res.readEntity(String.class);
+            try (JsonReader rdr = Json.createReader(new StringReader(body))) {
+                return rdr.readArray().stream()
+                        .map(v -> ((JsonObject) v).getString("name"))
+                        .collect(Collectors.toList());
+            }
+        }
+    }
+
+    public boolean userHasRealmRole(String userId, String roleName) {
+        return getUserRealmRoles(userId).stream().anyMatch(r -> r.equalsIgnoreCase(roleName));
     }
 
     public void addRealmRoles(String userId, List<String> roles) {
@@ -157,6 +224,19 @@ public class KcAdminService {
         }
     }
 
+    /** Count users who have the given realm role (useful if más adelante deseas impedir dejar 0 admins) */
+    public int countUsersWithRealmRole(String roleName) {
+        // Nota: Keycloak pagina estos resultados; max grande para evitar paginación
+        String path = adminBase() + "/roles/" + roleName + "/users?max=2147483647";
+        try (Response res = authed(path).get()) {
+            if (res.getStatus() != 200) throw new RuntimeException("Count users with role failed: " + res.getStatus());
+            String body = res.readEntity(String.class);
+            try (JsonReader rdr = Json.createReader(new StringReader(body))) {
+                return rdr.readArray().size();
+            }
+        }
+    }
+
     /* =================== sessions =================== */
 
     public void logoutUser(String userId) {
@@ -165,4 +245,54 @@ public class KcAdminService {
             if (res.getStatus() != 204) throw new RuntimeException("Logout failed: " + res.getStatus());
         }
     }
+
+    /* =================== groups =================== */
+
+    public Optional<JsonObject> findGroupByName(String name) {
+        String path = adminBase() + "/groups?search=" + URLEncoder.encode(name, StandardCharsets.UTF_8);
+        try (Response res = authed(path).get()) {
+            if (res.getStatus() != 200) throw new RuntimeException("Find group failed: " + res.getStatus());
+            String body = res.readEntity(String.class);
+            try (JsonReader rdr = Json.createReader(new StringReader(body))) {
+                return rdr.readArray().stream()
+                        .map(v -> (JsonObject) v)
+                        // algunos resultados son “contiene”; matcheá por nombre exacto
+                        .filter(o -> name.equalsIgnoreCase(o.getString("name", "")))
+                        .findFirst();
+            }
+        }
+    }
+
+    public boolean userInGroup(String userId, String groupId) {
+        String path = adminBase() + "/users/" + userId + "/groups";
+        try (Response res = authed(path).get()) {
+            if (res.getStatus() != 200) throw new RuntimeException("List user groups failed: " + res.getStatus());
+            String body = res.readEntity(String.class);
+            try (JsonReader rdr = Json.createReader(new StringReader(body))) {
+                return rdr.readArray().stream()
+                        .map(v -> (JsonObject) v)
+                        .anyMatch(g -> groupId.equals(g.getString("id", "")));
+            }
+        }
+    }
+
+    /** Añade usuario a un grupo (id del grupo) */
+    public void addUserToGroup(String userId, String groupId) {
+        String path = adminBase() + "/users/" + userId + "/groups/" + groupId;
+        try (Response res = authed(path).put(Entity.json("{}"))) {
+            if (res.getStatus() != 204) throw new RuntimeException("Add to group failed: " + res.getStatus());
+        }
+    }
+
+    /** Quita usuario de un grupo (id del grupo) */
+    public void removeUserFromGroup(String userId, String groupId) {
+        String path = adminBase() + "/users/" + userId + "/groups/" + groupId;
+        try (Response res = authed(path).delete()) {
+            if (res.getStatus() != 204) throw new RuntimeException("Remove from group failed: " + res.getStatus());
+        }
+    }
+
+
 }
+
+

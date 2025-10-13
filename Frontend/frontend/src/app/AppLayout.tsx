@@ -18,13 +18,11 @@ export default function AppLayout() {
   // BONUS: si inicia sesión y es admin, llévalo a /admin
   // (respetando navegación previa con state.from)
   useEffect(() => {
-    if (!authenticated) return;
-
-    const from = (location.state as any)?.from?.pathname;
-    if (from) return;
-
-    if (isAdmin && location.pathname !== '/admin') {
-      navigate('/admin', { replace: true });
+    if (!authenticated || !isAdmin) return;
+    const noRedirect = ['/admin', '/users-management'];
+    if(!noRedirect.includes(location.pathname)){
+      const from = (location.state as any)?.from?.pathname;
+      if (!from) navigate('/admin', {replace: true});
     }
   }, [authenticated, isAdmin, location.pathname, location.state, navigate]);
 
