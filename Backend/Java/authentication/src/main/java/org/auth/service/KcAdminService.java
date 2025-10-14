@@ -224,19 +224,6 @@ public class KcAdminService {
         }
     }
 
-    /** Count users who have the given realm role (useful if más adelante deseas impedir dejar 0 admins) */
-    public int countUsersWithRealmRole(String roleName) {
-        // Nota: Keycloak pagina estos resultados; max grande para evitar paginación
-        String path = adminBase() + "/roles/" + roleName + "/users?max=2147483647";
-        try (Response res = authed(path).get()) {
-            if (res.getStatus() != 200) throw new RuntimeException("Count users with role failed: " + res.getStatus());
-            String body = res.readEntity(String.class);
-            try (JsonReader rdr = Json.createReader(new StringReader(body))) {
-                return rdr.readArray().size();
-            }
-        }
-    }
-
     /* =================== sessions =================== */
 
     public void logoutUser(String userId) {
@@ -273,14 +260,6 @@ public class KcAdminService {
                         .map(v -> (JsonObject) v)
                         .anyMatch(g -> groupId.equals(g.getString("id", "")));
             }
-        }
-    }
-
-    /** Añade usuario a un grupo (id del grupo) */
-    public void addUserToGroup(String userId, String groupId) {
-        String path = adminBase() + "/users/" + userId + "/groups/" + groupId;
-        try (Response res = authed(path).put(Entity.json("{}"))) {
-            if (res.getStatus() != 204) throw new RuntimeException("Add to group failed: " + res.getStatus());
         }
     }
 

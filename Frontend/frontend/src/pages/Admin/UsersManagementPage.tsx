@@ -107,7 +107,7 @@ export default function UsersManagementPage() {
           disabled={loading}
           className="rounded-lg px-4 py-2 font-medium text-[#1E1E1E] bg-[#FFDA63] hover:opacity-90 disabled:opacity-60"
         >
-          {loading ? 'Cargando…' : 'Refrescar'}
+          {loading ? 'Loading…' : 'Refresh'}
         </button>
       </div>
 
@@ -116,7 +116,7 @@ export default function UsersManagementPage() {
         <input
           value={q}
           onChange={e => setQ(e.target.value)}
-          placeholder="Buscar por username o email…"
+          placeholder="Search by username or email…"
           className="w-full md:w-96 rounded-lg border border-[#333333] bg-[#1E1E1E] px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FFDA63]"
         />
         <button
@@ -132,11 +132,11 @@ export default function UsersManagementPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-[#333333] text-white">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold">Usuario</th>
+              <th className="px-4 py-3 text-left font-semibold">User</th>
               <th className="px-4 py-3 text-left font-semibold">Email</th>
-              <th className="px-4 py-3 text-left font-semibold">Estado</th>
-              <th className="px-4 py-3 text-left font-semibold">Roles (realm)</th>
-              <th className="px-4 py-3 text-left font-semibold">Acciones</th>
+              <th className="px-4 py-3 text-left font-semibold">State</th>
+              <th className="px-4 py-3 text-left font-semibold">Roles</th>
+              <th className="px-4 py-3 text-left font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -177,7 +177,7 @@ export default function UsersManagementPage() {
                           : 'bg-gray-600/40 text-gray-300'
                       }`}
                     >
-                      {u.enabled ? 'Activo' : 'Inactivo'}
+                      {u.enabled ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -203,16 +203,16 @@ export default function UsersManagementPage() {
                             ? 'bg-transparent text-white border-white/30 hover:bg-white/10'
                             : 'bg-[#D90429] text-white border-[#D90429] hover:opacity-90'}
                           disabled:opacity-50`}
-                        title={isAdmin ? 'No se puede activar/desactivar un administrador' : ''}
+                        title={isAdmin ? 'You cannot enable/disable an administrator.' : ''}
                       >
-                        {u.enabled ? 'Desactivar' : 'Activar'}
+                        {u.enabled ? 'Deactivate' : 'Activate'}
                       </button>
 
                       <button
                         onClick={() => makeAdmin(u)}
                         disabled={busy || isAdmin}
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#FFDA63] text-[#1E1E1E] hover:opacity-90 border border-[#FFDA63] disabled:opacity-50"
-                        title={isAdmin ? 'Ya es administrador' : 'Promover a administrador'}
+                        title={isAdmin ? 'Already admin' : 'Promote to admin'}
                       >
                         Make Admin
                       </button>
