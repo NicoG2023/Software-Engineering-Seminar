@@ -1,0 +1,12 @@
+cinema/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache
+.env
+.venv
+.vscode
+.idea
+dist/
+build/
