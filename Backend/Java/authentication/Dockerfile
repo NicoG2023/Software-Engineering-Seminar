@@ -1,31 +1,55 @@
-# ===== Builder =====
+# ==========================================================
+# 🏗️  Etapa 1: Construcción (Builder)
+# ==========================================================
 FROM eclipse-temurin:21-jdk AS build
+
+# Carpeta de trabajo dentro del contenedor
 WORKDIR /workspace
 
-# Copiamos wrapper + metadata para cachear
-COPY gradlew ./gradlew
+# ----------------------------------------------------------
+# 📦 Copiamos los archivos mínimos para aprovechar la caché
+# ----------------------------------------------------------
+COPY gradlew ./
+# Instalamos dos2unix para corregir el formato CRLF de Windows
+# y aseguramos permisos de ejecución
+RUN apt-get update && apt-get install -y dos2unix && \
+    dos2unix gradlew && chmod +x gradlew
+
+# Copiamos el wrapper de Gradle y archivos de configuración
 COPY gradle ./gradle
 COPY build.gradle settings.gradle gradle.properties ./
-# Si tienes versión catalog:
+# Si usas versión catalog:
 # COPY gradle/libs.versions.toml gradle/libs.versions.toml
 
-RUN chmod +x gradlew
+# ----------------------------------------------------------
+# 🧰 Descargamos dependencias sin compilar (usa cache)
+# ----------------------------------------------------------
+RUN ./gradlew --no-daemon dependencies || true
 
-# Descarga dependencias (usa cache)
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew --no-daemon dependencies || true
-
-# Ahora el código
+# ----------------------------------------------------------
+# 📁 Copiamos el código fuente de la app
+# ----------------------------------------------------------
 COPY src ./src
 
-# Build fast-jar
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew --no-daemon clean build -Dquarkus.package.type=fast-jar
+# ----------------------------------------------------------
+# 🧱 Compilamos el proyecto en modo fast-jar (más liviano)
+# ----------------------------------------------------------
+RUN ./gradlew --no-daemon clean build -Dquarkus.package.type=fast-jar
 
-# ===== Runner =====
+# ==========================================================
+# 🚀 Etapa 2: Ejecución (Runner)
+# ==========================================================
 FROM eclipse-temurin:21-jre AS runner
+
+# Carpeta de trabajo final
 WORKDIR /app
+
+# Copiamos el resultado de la compilación
 COPY --from=build /workspace/build/quarkus-app/ /app/
+
+# Configuración de red
 ENV QUARKUS_HTTP_HOST=0.0.0.0
 EXPOSE 8080
+
+# Comando de inicio de la aplicación
 CMD ["java", "-jar", "/app/quarkus-run.jar"]

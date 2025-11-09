@@ -4,15 +4,15 @@ import {
   Container, Typography, Button, Box, Paper,
   TextField, CircularProgress, Grid
 } from '@mui/material';
-import { movieService } from '../../../../src/services/api';
-import { MovieFormData } from '../../../../src/types';
+import { moviesApi } from '../../api/moviesApi';
+import type { CreateMovieDto } from '../../api/moviesApi';
 
 const MovieForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
-  const [formData, setFormData] = useState<MovieFormData>({
+  const [formData, setFormData] = useState<CreateMovieDto>({
     title: '',
     genre: '',
     duration: 0
@@ -24,7 +24,7 @@ const MovieForm: React.FC = () => {
   const fetchMovie = React.useCallback(async () => {
     try {
       setLoading(true);
-      const movie = await movieService.getMovie(Number(id));
+      const movie = await moviesApi.getById(Number(id));
       setFormData({
         title: movie.title,
         genre: movie.genre,
@@ -55,9 +55,9 @@ const MovieForm: React.FC = () => {
       setLoading(true);
       setError(null);
       if (isEditMode) {
-        await movieService.updateMovie(Number(id), formData);
+        await moviesApi.update(Number(id), formData);
       } else {
-        await movieService.createMovie(formData);
+        await moviesApi.create(formData);
       }
       navigate('/movies');
     } catch {

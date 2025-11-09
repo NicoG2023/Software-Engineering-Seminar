@@ -7,8 +7,8 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { movieService } from '../../../../src/services/api';
-import { Movie } from '../../../../src/types';
+import { moviesApi } from '../../api/moviesApi';
+import type { Movie } from '../../api/moviesApi';
 
 const MovieDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +21,7 @@ const MovieDetail: React.FC = () => {
   const fetchMovie = React.useCallback(async () => {
     try {
       setLoading(true);
-      const data = await movieService.getMovie(Number(id));
+      const data = await moviesApi.getById(Number(id));
       setMovie(data);
     } catch {
       setError('Failed to load movie data');
@@ -37,7 +37,7 @@ const MovieDetail: React.FC = () => {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this movie?')) {
       try {
-        await movieService.deleteMovie(Number(id));
+        await moviesApi.delete(Number(id));
         navigate('/movies');
       } catch {
         setError('Failed to delete movie');

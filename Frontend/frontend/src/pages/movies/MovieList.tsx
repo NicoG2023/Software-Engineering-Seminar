@@ -8,8 +8,8 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { movieService } from '../../../../src/services/api';
-import { Movie } from '../../../../src/types';
+import { moviesApi } from '../../api/moviesApi';
+import type { Movie } from '../../api/moviesApi';
 
 const MovieList: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -24,7 +24,7 @@ const MovieList: React.FC = () => {
   const fetchMovies = async (filters?: { title?: string; genre?: string }) => {
     try {
       setLoading(true);
-      const data = await movieService.getMovies(filters);
+      const data = await moviesApi.getAll(filters);
       setMovies(data);
     } catch (error) {
       console.error('Error fetching movies:', error);
@@ -36,7 +36,7 @@ const MovieList: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this movie?')) {
       try {
-        await movieService.deleteMovie(id);
+        await moviesApi.delete(id);
         fetchMovies(); // Refresh the list
       } catch (error) {
         console.error('Error deleting movie:', error);

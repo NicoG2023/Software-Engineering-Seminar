@@ -6,6 +6,9 @@ import NotFound from '../pages/NotFound';
 import RequireAuth from '../auth/guards/RequireAuth';
 import RequireRole from '../auth/guards/RequireRole';
 import UsersManagementPage from '../pages/Admin/UsersManagementPage';
+import MovieList from '../pages/movies/MovieList';
+import MovieDetail from '../pages/movies/MovieDetail';
+import MovieForm from '../pages/movies/MovieForm';
 
 const router = createBrowserRouter([
   {
@@ -34,6 +37,10 @@ const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      { path: 'movies', element: <MovieList /> },
+      { path: 'movies/:id', element: <MovieDetail /> },
+      { path: 'movies/new', element: <MovieForm /> },
+      { path: 'movies/edit/:id', element: <MovieForm /> },
       { path: '404', element: <NotFound /> },
     ],
   },
