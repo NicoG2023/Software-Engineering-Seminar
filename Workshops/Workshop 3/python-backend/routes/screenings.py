@@ -58,10 +58,8 @@ def create_screening():
         - and that there is no screening conflict for the same room/date/time.
     """
     data = request.get_json()
-
     movie = Movie.query.get(data.get('movie_id'))
     room = TheaterRoom.query.get(data.get('room_id'))
-
     if not movie or not room:
         return jsonify({"error": "Invalid movie or room"}), 400
 
@@ -71,26 +69,23 @@ def create_screening():
     if screening_date < date.today():
         return jsonify({"error": "Cannot schedule screenings in the past"}), 400
 
-    # Usar is_deleted y los nombres correctos de columnas
     conflict = Screening.query.filter_by(
-        room_id=room.id_room,
+        room_id=room.id,
         date=screening_date,
         time=screening_time,
-        is_deleted=False
+        deleted=False  # assuming a soft-delete flag named `deleted`
     ).first()
-
     if conflict:
         return jsonify({"error": "Scheduling conflict detected"}), 400
 
     new_screening = Screening(
-        movie_id=movie.id_movie,
-        room_id=room.id_room,
+        movie_id=movie.id,
+        room_id=room.id,
         date=screening_date,
         time=screening_time
     )
     db.session.add(new_screening)
     db.session.commit()
-
     return jsonify({"message": "Screening created successfully"}), 201
 
 
@@ -122,20 +117,15 @@ def get_screenings_by_movie(movie_id):
     Description:
       Returns all non-deleted screenings for the given movie (`deleted = False`).
     """
-    screenings = Screening.query.filter_by(
-        movie_id=movie_id,
-        is_deleted=False
-    ).all()
-
+    screenings = Screening.query.filter_by(movie_id=movie_id, deleted=False).all()
     return jsonify([
         {
-            "id": s.id_screening,
+            "id": s.id,
             "date": s.date.isoformat(),
             "time": s.time.strftime("%H:%M"),
             "room": s.room.name
-        }
-        for s in screenings
-    ]), 200
+        } for s in screenings
+    ])
 
 
 @screenings_bp.route('/screenings/<int:id>', methods=['DELETE'])
@@ -165,6 +155,6 @@ def delete_screening(id):
       keeping the record in the database for audit/history purposes.
     """
     screening = Screening.query.get_or_404(id)
-    screening.is_deleted = True
+    screening.deleted = True  # Soft delete
     db.session.commit()
     return jsonify({"message": "Screening deleted (soft delete)"}), 200

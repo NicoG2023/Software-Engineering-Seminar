@@ -5,6 +5,39 @@
 
 ### 1.1 Python
 
+The Python backend is located in the folder [`python-backend`](./python-backend).  
+It implements the **business logic** of the cinema application using **Flask** and **SQLAlchemy**, exposing REST endpoints to manage movies and screenings.
+
+The main components are:
+
+- `app.py`  
+  Initializes the Flask application, loads environment variables, configures the PostgreSQL connection via SQLAlchemy, and registers the API blueprints under the `/api` prefix.  
+  It also exposes basic health-check endpoints (`/` and `/health`) to verify that the backend and database configuration are working.
+
+- `database.py`  
+  Centralizes the database configuration and creates the global `db` instance used by all models.  
+  It builds the PostgreSQL connection string from environment variables (`DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME`) and initializes SQLAlchemy.
+
+- `models.py`  
+  Defines the ORM data model for the cinema domain: `User`, `Genre`, `Movie`, `TheaterRoom`, `Screening`, and `Ticket`.  
+  These models include relationships between entities (for example, one `Genre` to many `Movie`, one `Movie` to many `Screening`, one `User` to many `Ticket`, etc.).
+
+- `routes/movies.py`  
+  Contains the REST endpoints to create, list, update and **soft delete** movies:
+  - `POST /api/movies` – create a movie (creating the genre on the fly if needed)  
+  - `GET /api/movies` – list movies with optional filters by title and genre  
+  - `PUT /api/movies/<id>` – update movie title, duration and genre  
+  - `DELETE /api/movies/<id>` – soft delete a movie by marking it as `is_deleted = True`
+
+- `routes/screenings.py`  
+  Contains the REST endpoints to manage screenings (showtimes) for movies:
+  - `POST /api/screenings` – create a new screening, validating movie/room existence, preventing past dates and scheduling conflicts  
+  - `GET /api/screenings/<movie_id>` – list screenings for a specific movie  
+  - `DELETE /api/screenings/<id>` – soft delete a screening
+
+Together, these components form the **Python backend** responsible for the core cinema operations (movies and screenings), while the Java backend focuses on authentication and user/role management.
+
+
 ### 1.2 Java
 
 The Java backend is located in the folder [`java-backend`](./java-backend).  
@@ -16,6 +49,105 @@ The backend is developed with **Quarkus (Java)** and communicates with Keycloak�
 
 ### 2.1 Python
 
+The Python backend connects to a **PostgreSQL** database using the **SQLAlchemy ORM**.  
+All database connection parameters are loaded from environment variables defined in a `.env` file, ensuring secure and configurable deployment both locally and inside Docker containers.
+
+The connection setup is defined in the file **`database.py`**, which:
+
+- Initializes the global `db` object.
+- Dynamically constructs the PostgreSQL connection string based on environment variables.
+
+---
+
+#### Connection Setup (`database.py`)
+
+```python
+from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
+from dotenv import load_dotenv
+import os
+
+# Load variables from .env
+load_dotenv()
+
+db = SQLAlchemy()
+
+def init_db(app: Flask):
+    # Build the PostgreSQL connection URI
+    user = os.getenv("DB_USER", "postgres")
+    password = os.getenv("DB_PASSWORD", "enlaceprueba")
+    host = os.getenv("DB_HOST", "host.docker.internal")  # important when running with Docker
+    port = os.getenv("DB_PORT", "5432")
+    name = os.getenv("DB_NAME", "moviedb")
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{user}:{password}@{host}:{port}/{name}"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    db.init_app(app)
+````
+
+---
+
+#### Key Features
+
+* Reads PostgreSQL credentials (`DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME`) from the `.env` file.
+* Dynamically builds the SQLAlchemy connection URI.
+* Initializes a shared `db` instance used across all models in the backend.
+
+---
+
+#### Example `.env` File
+
+```bash
+DB_USER=postgres
+DB_PASSWORD=enlaceprueba
+DB_HOST=host.docker.internal
+DB_PORT=5432
+DB_NAME=moviedb
+SECRET_KEY=dev_secret_key
+```
+
+---
+
+#### Database Initialization in `app.py`
+
+When the Flask application starts, the database schema is automatically created within the app context:
+
+```python
+from database import db
+import os
+
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+
+with app.app_context():
+    db.create_all()
+    print("✅ Database tables created successfully!")
+    print(f"Connected to DB: {DB_NAME} on {DB_HOST}:{DB_PORT}")
+```
+
+---
+
+### ✅ Summary
+
+This setup ensures:
+
+* Secure configuration using environment variables.
+* Easy integration with Docker environments.
+* Automatic database initialization on app startup.
+
+```
+
+---
+
+✅ **Listo para copiar:**  
+Si pegas esto directamente en tu `README.md`, GitHub o cualquier editor Markdown lo mostrará perfectamente con los bloques de código (Python, Bash, etc.), títulos y formato consistente.  
+
+¿Quieres que le agregue también una pequeña sección final de “Troubleshooting” (errores comunes de conexión a PostgreSQL)?
+```
+
+
 ### 2.2 Java
 
 The Java backend does not connect directly to a relational database.  
@@ -23,6 +155,7 @@ Instead, it communicates with **Keycloak**, which in turn uses **MySQL** as its 
 All authentication data (users, roles, groups, sessions) are stored in the MySQL instance managed by Keycloak.
 
 The connection between Keycloak and MySQL is defined in the project’s `docker-compose` configuration, using two services: `mysql-db` (MySQL) and `keycloak` (Keycloak server).
+
 
 #### Docker Compose configuration (MySQL + Keycloak)
 
@@ -81,6 +214,52 @@ keycloak:
 
 ### 3.1 Python
 
+The **Python backend** exposes a REST API that manages **movies** and **screenings** within the cinema domain.
+All endpoints are documented using **OpenAPI 3.0**, following the same structure and level of detail as the Java backend.
+The documentation is available both as a YAML file and as a static interactive HTML page.
+
+#### 📄 Static Documentation
+
+A complete OpenAPI specification was created manually based on the Flask routes defined in
+[`python-backend/routes/movies.py`](./python-backend/routes/movies.py)
+and [`python-backend/routes/screenings.py`](./python-backend/routes/screenings.py).
+
+The static version of the API documentation was generated using **ReDoc**, providing an interactive visualization of all endpoints, request/response schemas, and examples.
+
+* **OpenAPI YAML**: [`docs/openapi-python.yaml`](./docs/openapi-python.yaml)
+* **Full HTML Documentation**: [`docs/python-business-api.html`](./docs/python-business-api.html)
+
+You can open the HTML file locally in any browser to explore the complete API documentation.
+
+#### 🧩 Endpoint Documentation
+
+Each route in the Python backend is thoroughly documented directly within the source code using structured **docstrings**.
+These docstrings describe, for each endpoint:
+
+* HTTP method and URL (e.g., `POST /api/movies`)
+* Expected request body and example payloads
+* Path and query parameters
+* Possible response codes and example responses
+* Behavior and validation rules
+
+This makes the code **self-explanatory and OpenAPI-compatible**, allowing future automatic generation of YAML or Swagger UI documentation if needed.
+
+Examples of documented endpoints include:
+
+* `POST /api/movies` — Creates a new movie and its associated genre if it does not exist.
+* `GET /api/movies` — Lists all active movies, with optional filters by title and genre.
+* `PUT /api/movies/{id}` — Updates title, duration, and genre of an existing movie.
+* `DELETE /api/movies/{id}` — Soft deletes a movie by marking it as inactive.
+* `POST /api/screenings` — Registers a new screening, validating scheduling conflicts.
+* `GET /api/screenings/{movie_id}` — Lists all screenings for a given movie.
+* `DELETE /api/screenings/{id}` — Soft deletes a screening while keeping historical data.
+
+#### 💡 Integration Summary
+
+By combining **OpenAPI YAML**, **ReDoc HTML**, and **in-code docstrings**,
+the Python backend achieves full documentation transparency, mirroring the structure and professionalism of the Java REST API.
+
+
 ### 3.2 Java
 
 The **Java backend** provides a complete OpenAPI documentation.  
@@ -126,6 +305,55 @@ Here you can see how it actually looks when running in the browser:
 
 ### 4.1 Python
 
+Unit tests for the Python backend were implemented using **pytest** and the **Flask test client**.
+The tests run against an in-memory **SQLite** database, so no external PostgreSQL instance is required.
+
+The main goals of these tests are:
+
+* Validate the core business logic of the **movies** API:
+
+  * `POST /api/movies` – creation with required fields and genre handling
+  * `GET /api/movies` – listing only non-deleted movies and supporting filters by title/genre
+  * `PUT /api/movies/<id>` – updating title, duration and genre
+  * `DELETE /api/movies/<id>` – soft delete using the `is_deleted` flag
+
+* Validate the core business logic of the **screenings** API:
+
+  * `POST /api/screenings` – creation validating:
+
+    * existing movie and room
+    * no screenings in the past
+    * no duplicate (room, date, time) combinations
+  * `GET /api/screenings/<movie_id>` – listing only non-deleted screenings for a movie
+  * `DELETE /api/screenings/<id>` – soft delete using the `is_deleted` flag
+
+All tests passed successfully, confirming that the Python backend correctly enforces validation rules, soft-delete semantics and query filters.
+
+---
+
+#### ✅ Evidence of Test Execution (Python)
+
+<p align="center">
+  <img src="./docs/test-results-images/Python-Test-results-1.png" alt="Pytest execution summary for Python backend" width="70%"/><br/>
+  <em>Figure 1. Pytest execution showing all movie and screening tests passing.</em>
+</p>
+
+<p align="center">
+  <img src="./docs/test-results-images/Python-Test-results-2.png" alt="Detailed pytest output for Python backend" width="70%"/><br/>
+  <em>Figure 2. Detailed pytest output confirming that all 12 tests completed successfully.</em>
+</p>
+
+---
+
+#### 🧰 Command Used
+
+From the `python-backend` directory (with the virtual environment activated):
+
+```bash
+pytest -vv
+```
+
+
 ### 4.2 Java
 
 Unit tests for the Java backend were implemented using **JUnit 5** and **Mockito**.  
@@ -165,3 +393,4 @@ The tests can be executed directly using Gradle:
 ```
 
 ## 5. Evidence of Web GUI integration
+

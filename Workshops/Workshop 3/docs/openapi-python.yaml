@@ -1,0 +1,300 @@
+openapi: 3.0.3
+info:
+  title: Cinema Business API (Python Backend)
+  version: 1.0.0
+  description: >
+    REST API implemented with Flask and SQLAlchemy to manage movies and screenings.
+
+servers:
+  - url: http://localhost:5000
+    description: Local Flask server
+
+paths:
+  /api/movies:
+    post:
+      summary: Create a new movie
+      description: Creates a movie and, if needed, automatically creates the associated genre.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieCreateRequest'
+            examples:
+              createMovie:
+                summary: Example movie creation
+                value:
+                  title: "Inception"
+                  duration: 148
+                  genre: "Sci-Fi"
+      responses:
+        '201':
+          description: Movie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieCreateResponse'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List movies
+      description: >
+        Returns all non-deleted movies. Allows optional filtering by title and genre.
+      parameters:
+        - in: query
+          name: genre
+          schema:
+            type: string
+          description: Filter by genre name (case-insensitive, partial match).
+        - in: query
+          name: title
+          schema:
+            type: string
+          description: Filter by movie title (case-insensitive, partial match).
+      responses:
+        '200':
+          description: List of movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieListItem'
+
+  /api/movies/{id}:
+    put:
+      summary: Update a movie
+      description: Updates title, duration and/or genre of an existing movie.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Movie identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieUpdateRequest'
+            examples:
+              updateMovie:
+                value:
+                  title: "Inception (Extended)"
+                  duration: 150
+                  genre: "Sci-Fi"
+      responses:
+        '200':
+          description: Movie updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Movie not found
+    delete:
+      summary: Soft delete a movie
+      description: Marks a movie as deleted by setting the `is_deleted` flag to true.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Movie identifier.
+      responses:
+        '200':
+          description: Movie soft deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Movie not found
+
+  /api/screenings:
+    post:
+      summary: Create a screening
+      description: >
+        Creates a new screening for a given movie and theater room.
+        Validates that the movie and room exist, that the date is not in the past,
+        and that there is no scheduling conflict for the same room/date/time.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreeningCreateRequest'
+            examples:
+              createScreening:
+                value:
+                  movie_id: 1
+                  room_id: 1
+                  date: "2025-01-10"
+                  time: "19:30"
+      responses:
+        '201':
+          description: Screening created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid data or scheduling conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/screenings/{movie_id}:
+    get:
+      summary: Get screenings by movie
+      description: Returns all non-deleted screenings for the specified movie.
+      parameters:
+        - in: path
+          name: movie_id
+          required: true
+          schema:
+            type: integer
+          description: Movie identifier.
+      responses:
+        '200':
+          description: List of screenings for the movie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScreeningByMovieItem'
+
+  /api/screenings/{id}:
+    delete:
+      summary: Soft delete a screening
+      description: Marks the screening as deleted (soft delete).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Screening identifier.
+      responses:
+        '200':
+          description: Screening soft deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Screening not found
+
+components:
+  schemas:
+    MovieCreateRequest:
+      type: object
+      required: [title, duration, genre]
+      properties:
+        title:
+          type: string
+          example: "Inception"
+        duration:
+          type: integer
+          example: 148
+          description: Duration in minutes.
+        genre:
+          type: string
+          example: "Sci-Fi"
+    MovieCreateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Movie created successfully"
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Inception"
+        genre:
+          type: string
+          example: "Sci-Fi"
+    MovieListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Inception"
+        genre:
+          type: string
+          nullable: true
+          example: "Sci-Fi"
+        duration:
+          type: integer
+          example: 148
+    MovieUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Inception (Extended)"
+        duration:
+          type: integer
+          example: 150
+        genre:
+          type: string
+          example: "Sci-Fi"
+    ScreeningCreateRequest:
+      type: object
+      required: [movie_id, room_id, date, time]
+      properties:
+        movie_id:
+          type: integer
+          example: 1
+        room_id:
+          type: integer
+          example: 1
+        date:
+          type: string
+          format: date
+          example: "2025-01-10"
+        time:
+          type: string
+          pattern: '^[0-9]{2}:[0-9]{2}$'
+          example: "19:30"
+    ScreeningByMovieItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        date:
+          type: string
+          format: date
+          example: "2025-01-10"
+        time:
+          type: string
+          example: "19:30"
+        room:
+          type: string
+          example: "Room 1"
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operation completed successfully"
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Missing required fields"
