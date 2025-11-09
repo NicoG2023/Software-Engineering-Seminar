@@ -9,11 +9,10 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.quarkus:quarkus-smallrye-openapi'
-    // 1) BOM primero (muy importante)
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
 
-    // 2) Extensiones Quarkus
+    // ---- Implementaciones principales ----
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
     implementation 'io.quarkus:quarkus-oidc'
     implementation 'io.quarkus:quarkus-security'
     implementation 'io.quarkus:quarkus-rest'
@@ -21,8 +20,12 @@ dependencies {
     implementation 'io.quarkus:quarkus-rest-client'
     implementation 'io.quarkus:quarkus-arc'
 
+    // ---- Test ----
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'io.quarkus:quarkus-test-security'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'io.quarkus:quarkus-junit5-mockito'
 }
 
 group = 'org.auth'
