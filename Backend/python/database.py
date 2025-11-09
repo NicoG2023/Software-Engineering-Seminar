@@ -11,11 +11,12 @@ db = SQLAlchemy()
 
 def init_db(app: Flask):
     # Construir la URI de conexión a PostgreSQL
-    user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "enlaceprueba")
-    host = os.getenv("DB_HOST", "host.docker.internal")  # importante si corres en Docker
+    user = os.getenv("DB_USER", "app")
+    password = os.getenv("DB_PASSWORD", "app")
+    # 👇 nombre del servicio en docker-compose
+    host = os.getenv("DB_HOST", "postgres-db")
     port = os.getenv("DB_PORT", "5432")
-    name = os.getenv("DB_NAME", "moviedb")
+    name = os.getenv("DB_NAME", "cinema")
 
     # SQLAlchemy connection string
     app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{user}:{password}@{host}:{port}/{name}"

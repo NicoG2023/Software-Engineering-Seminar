@@ -392,5 +392,56 @@ The tests can be executed directly using Gradle:
 ./gradlew clean test
 ```
 
-## 5. Evidence of Web GUI integration
+## 5. Evidence of Web GUI Integration
+
+This section presents the progress and visual evidence of the **Cinema Management System Web UI**, which integrates both the **frontend (React + Tailwind)** and the **backend (Flask + PostgreSQL)** components.  
+The interface maintains a consistent color palette (`#1E1E1E`, `#D90429`, `#FFDA63`) for visual coherence and usability.
+
+### 🎬 5.1 Catalog Page
+
+Displays the list of available movies dynamically fetched from the Flask backend.  
+Each card shows the movie title, genre, and duration, maintaining the modern dark theme with red borders and golden accent buttons.
+
+![Catalog Page](docs/Web-UI-images/Catalog-Page.png)
+
+---
+
+### 🔐 5.2 Login Screen
+
+The login interface is fully integrated with **Keycloak**, allowing secure authentication.  
+It follows the same visual identity: black background, red primary button, and yellow Google sign-in button.
+
+![Login Screen](docs/Web-UI-images/Login-screenshot.png)
+
+---
+
+### 📝 5.3 Register Screen
+
+The registration form allows new users to create an account in Keycloak.  
+All input fields include proper validation and retain the dark-themed styling.
+
+![Register Screen](docs/Web-UI-images/Register-screenshot.png)
+
+---
+
+### 🔄 5.4 Forgot Password Screen
+
+Implements the password recovery flow integrated with Keycloak, providing users a simple interface to reset their credentials.
+
+![Forgot Password Screen](docs/Web-UI-images/ForgotPassword-screenshot.png)
+
+---
+
+### 🧑‍💼 5.5 Users Management Screen
+
+Accessible only for administrators, this page lists all users registered in the system.  
+It includes functionalities to **search**, **deactivate**, and **assign roles** dynamically, styled consistently with the rest of the UI.
+
+![Users Management Screen](docs/Web-UI-images/UsersManagement-screenshot.png)
+
+---
+
+> **Summary:**  
+> The front-end successfully integrates with authentication (Keycloak), API endpoints (Flask), and database data (PostgreSQL), ensuring a cohesive and functional user experience across all modules.
+
 
