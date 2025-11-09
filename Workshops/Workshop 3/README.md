@@ -1,4 +1,9 @@
 # Workshop-3
+
+Members:
+- Nicolás Guevara Herrán
+- Samuel Antonio Sánchez Peña
+- Jorge Enrique Acosta Jiménez
 ---
 
 ## 1. Source Code for Backends
@@ -439,9 +444,6 @@ It includes functionalities to **search**, **deactivate**, and **assign roles** 
 
 ![Users Management Screen](docs/Web-UI-images/UsersManagement-screenshot.png)
 
----
 
-> **Summary:**  
-> The front-end successfully integrates with authentication (Keycloak), API endpoints (Flask), and database data (PostgreSQL), ensuring a cohesive and functional user experience across all modules.
 
 
