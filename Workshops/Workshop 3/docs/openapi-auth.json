@@ -1,0 +1,517 @@
+---
+openapi: 3.1.0
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+      - username
+      - email
+      - password
+      description: Payload to create a new user.
+      properties:
+        username:
+          type: string
+          examples:
+          - Jhon Doe
+        email:
+          type: string
+          examples:
+          - jdoe@example.com
+        password:
+          type: string
+          examples:
+          - S3cretPwd!
+        emailVerified:
+          type: boolean
+          examples:
+          - true
+          description: Marks the email as verified upon creation.
+          default: true
+        enabled:
+          type: boolean
+          examples:
+          - true
+          description: Creates the user as enabled.
+          default: true
+    CreateUserResponse:
+      type: object
+      description: Response containing the created user's identifier.
+      properties:
+        id:
+          type: string
+          examples:
+          - 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+    EnabledRequest:
+      type: object
+      required:
+      - enabled
+      description: Enable or disable a user account.
+      properties:
+        enabled:
+          type: boolean
+          examples:
+          - false
+    ErrorResponse:
+      type: object
+      description: Standard error payload.
+      properties:
+        error:
+          type: string
+          examples:
+          - No se puede activar/desactivar un administrador
+        message:
+          type: string
+          examples:
+          - Detailed explanation of the error (optional)
+    PasswordRequest:
+      type: object
+      required:
+      - password
+      description: Set or reset a user's password.
+      properties:
+        password:
+          type: string
+          examples:
+          - N3wP4ssword!
+        temporary:
+          type: boolean
+          examples:
+          - false
+          description: "If true, the user will be forced to change the password on\
+            \ next login."
+          default: false
+    RolesRequest:
+      type: object
+      required:
+      - roles
+      description: Realm roles to add or remove for a user.
+      properties:
+        roles:
+          type: array
+          examples:
+          - - Customer
+            - client
+          items:
+            type: string
+    UserDetail:
+      type: object
+      description: Detailed user with realm roles injected.
+      properties:
+        id:
+          type: string
+          examples:
+          - 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        username:
+          type: string
+          examples:
+          - aleja
+        email:
+          type: string
+          examples:
+          - aleja@example.com
+        enabled:
+          type: boolean
+          examples:
+          - true
+        realmRoles:
+          type: array
+          examples:
+          - - admin
+            - Customer
+          items:
+            type: string
+          description: Realm roles assigned to the user
+    UserSummary:
+      type: object
+      description: Basic user summary as returned by Keycloak list endpoint.
+      properties:
+        id:
+          type: string
+          examples:
+          - 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        username:
+          type: string
+          examples:
+          - aleja
+        email:
+          type: string
+          examples:
+          - aleja@example.com
+        enabled:
+          type: boolean
+          examples:
+          - true
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    SecurityScheme:
+      type: openIdConnect
+      openIdConnectUrl: http://localhost:8080/realms/cinema/.well-known/openid-configuration
+      description: Authentication
+tags:
+- name: Auth Admin API
+  description: Administrative operations to manage users and realm roles in Keycloak.
+paths:
+  /api/auth/users:
+    get:
+      summary: List users
+      description: Returns a raw JSON array from Keycloak's Admin API. Filtering and
+        pagination are proxied.
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: Pagination offset
+        example: 0
+        name: first
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - description: Page size
+        example: 50
+        name: max
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - description: Search term (forwarded to Keycloak `search`)
+        example: aleja
+        name: q
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Array of users
+          content:
+            application/json:
+              examples:
+                users:
+                  value:
+                  - id: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+                    username: aleja
+                    email: aleja@example.com
+                    enabled: true
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSummary"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+    post:
+      summary: Create a new user
+      description: Creates a user in Keycloak and sets the initial password. Requires
+        `admin` role.
+      tags:
+      - Auth Admin API
+      requestBody:
+        description: User creation payload
+        content:
+          application/json:
+            examples:
+              request:
+                value:
+                  username: aleja
+                  email: aleja@example.com
+                  password: S3cretPwd!
+                  emailVerified: true
+                  enabled: true
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+        required: true
+      responses:
+        "201":
+          description: User successfully created
+          content:
+            application/json:
+              examples:
+                created:
+                  value:
+                    id: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+              schema:
+                $ref: "#/components/schemas/CreateUserResponse"
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden (missing `admin` role)
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+  /api/auth/users/{id}:
+    get:
+      summary: Get user details
+      description: Fetches a single user from Keycloak and injects their realm roles.
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: User ID
+        example: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        required: true
+        name: id
+        in: path
+        schema:
+          type: string
+      responses:
+        "200":
+          description: User detail
+          content:
+            application/json:
+              examples:
+                user:
+                  value:
+                    id: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+                    username: aleja
+                    email: aleja@example.com
+                    enabled: true
+                    realmRoles:
+                    - admin
+                    - Customer
+              schema:
+                $ref: "#/components/schemas/UserDetail"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+  /api/auth/users/{id}/enabled:
+    put:
+      summary: Enable or disable a user
+      description: Sets the user's enabled status. The operation is forbidden for
+        administrators.
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: User ID
+        example: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        required: true
+        name: id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples: {}
+            schema:
+              $ref: "#/components/schemas/EnabledRequest"
+        required: true
+      responses:
+        "204":
+          description: Status updated
+        "400":
+          description: Invalid payload
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden (admin users cannot be enabled/disabled)
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+  /api/auth/users/{id}/password:
+    put:
+      summary: Set or reset a user's password
+      description: Sets a new password for the specified user. Optionally marks it
+        as temporary.
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: User ID
+        example: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        required: true
+        name: id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples: {}
+            schema:
+              $ref: "#/components/schemas/PasswordRequest"
+        required: true
+      responses:
+        "204":
+          description: Password updated
+        "400":
+          description: Invalid payload
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+  /api/auth/users/{id}/promote-admin:
+    post:
+      summary: Promote user to admin
+      description: "Assigns the `admin` realm role, removes `Customer` if present,\
+        \ and removes the user from the `customers` group if applicable."
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: User ID
+        example: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        required: true
+        name: id
+        in: path
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Promotion applied
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+        "409":
+          description: User is already an admin
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+  /api/auth/users/{id}/roles/realm:
+    delete:
+      summary: Remove realm roles from a user
+      description: Removes one or more realm roles from the specified user. The `admin`
+        role cannot be removed via this endpoint.
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: User ID
+        example: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        required: true
+        name: id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples: {}
+            schema:
+              $ref: "#/components/schemas/RolesRequest"
+        required: true
+      responses:
+        "204":
+          description: Roles removed
+        "400":
+          description: Invalid payload
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden (target is admin or attempt to remove `admin` role)
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User or role not found
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+    post:
+      summary: Add realm roles to a user
+      description: Assigns one or more realm roles to the specified user. The `admin`
+        role cannot be assigned via this endpoint.
+      tags:
+      - Auth Admin API
+      parameters:
+      - description: User ID
+        example: 5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab
+        required: true
+        name: id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples: {}
+            schema:
+              $ref: "#/components/schemas/RolesRequest"
+        required: true
+      responses:
+        "204":
+          description: Roles added
+        "400":
+          description: Invalid payload
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Forbidden (target is admin or attempt to assign `admin` role)
+          content:
+            application/json:
+              examples: {}
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User or role not found
+        "500":
+          description: Keycloak admin error
+      security:
+      - bearerAuth: []
+info:
+  title: authentication API
+  version: 1.0.0-SNAPSHOT
