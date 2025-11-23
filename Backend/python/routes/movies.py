@@ -32,7 +32,8 @@ def create_movie():
           "message": "Movie created successfully",
           "id": 1,
           "title": "Inception",
-          "genre": "Sci-Fi"
+          "genre": "Sci-Fi",
+          "duration": 148
         }
         ```
       - **400 Bad Request**
@@ -72,7 +73,8 @@ def create_movie():
         "message": "Movie created successfully",
         "id": movie.id_movie,
         "title": movie.title,
-        "genre": movie.genre.name
+        "genre": movie.genre.name,
+        "duration": movie.duration_minutes
     }), 201
 
 
@@ -226,3 +228,86 @@ def delete_movie(id):
     db.session.commit()
 
     return jsonify({"message": "Movie deleted (soft delete)"}), 200
+
+# -------------------------------
+# Get a movie by ID
+# -------------------------------
+@movies_bp.route('/movies/<int:id>', methods=['GET'])
+def get_movie(id):
+    """
+    Get a single movie by its ID.
+
+    OpenAPI summary:
+      - **Method:** GET
+      - **URL:** `/api/movies/{id}`
+
+    Path parameters:
+      - `id` (integer, required): Movie identifier.
+
+    Responses:
+      - **200 OK**
+        ```json
+        {
+          "id": 1,
+          "title": "Inception",
+          "genre": "Sci-Fi",
+          "duration": 148
+        }
+        ```
+      - **404 Not Found**
+        ```json
+        {
+          "error": "Movie not found"
+        }
+        ```
+
+    Description:
+      Returns a single movie with its associated genre.  
+      Movies that are soft-deleted (`is_deleted = True`) are not returned.
+    """
+    movie = Movie.query.filter_by(id_movie=id, is_deleted=False).first()
+
+    if not movie:
+        return jsonify({"error": "Movie not found"}), 404
+
+    return jsonify({
+        "id": movie.id_movie,
+        "title": movie.title,
+        "genre": movie.genre.name if movie.genre else None,
+        "duration": movie.duration_minutes
+    }), 200
+
+# -------------------------------
+# List all genres
+# -------------------------------
+@movies_bp.route('/genres', methods=['GET'])
+def list_genres():
+    """
+    List all genres.
+
+    OpenAPI summary:
+      - **Method:** GET
+      - **URL:** `/api/genres`
+
+    Responses:
+      - **200 OK**
+        ```json
+        [
+          { "id": 1, "name": "Drama" },
+          { "id": 2, "name": "Sci-Fi" }
+        ]
+        ```
+
+    Description:
+      Returns all available genres ordered by name. This is intended to be used
+      by the frontend to populate dropdowns for movie creation, editing and filtering.
+    """
+    genres = Genre.query.order_by(Genre.name.asc()).all()
+
+    return jsonify([
+        {
+            "id": g.id_genre,
+            "name": g.name
+        }
+        for g in genres
+    ]), 200

@@ -1,5 +1,6 @@
 // src/pages/Catalog/CatalogPage.tsx
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { moviesApi, type Movie } from '../../api/moviesApi';
 
 export default function CatalogPage() {
@@ -39,10 +40,15 @@ export default function CatalogPage() {
               </div>
 
               <div className="mt-6 flex justify-between items-center">
-                <button className="bg-[#FFDA63] text-[#1E1E1E] text-sm px-4 py-2 rounded-xl font-semibold hover:opacity-90 transition duration-200">
+                <Link
+                  to={`/movies/${m.id}`}
+                  className="bg-[#FFDA63] text-[#1E1E1E] text-sm px-4 py-2 rounded-xl font-semibold hover:opacity-90 transition duration-200"
+                >
                   View Details
-                </button>
-                <span className="text-gray-400 text-xs">⭐ {Math.floor(Math.random() * 2) + 4}.0</span>
+                </Link>
+                <span className="text-gray-400 text-xs">
+                  ⭐ {Math.floor(Math.random() * 2) + 4}.0
+                </span>
               </div>
             </div>
           ))}

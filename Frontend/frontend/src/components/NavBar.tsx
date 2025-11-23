@@ -22,17 +22,24 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
     return base.charAt(0).toUpperCase();
   }, [username]);
 
-  useEffect(() => { setOpen(false); }, [location]);
+  useEffect(() => setOpen(false), [location]);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (!open) return;
       const t = e.target as Node;
-      if (menuRef.current && !menuRef.current.contains(t) && buttonRef.current && !buttonRef.current.contains(t)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(t) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(t)
+      ) {
         setOpen(false);
       }
     }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -43,21 +50,72 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
 
   const goManageUsers = () => navigate('/users-management');
 
+  // detectar rutas activas
+  const isMoviesRoute = location.pathname.startsWith('/movies');
+  const isRoomsRoute = location.pathname.startsWith('/rooms');
+  const isScreeningsRoute = location.pathname.startsWith('/screenings');
+
   return (
     <header className="w-full bg-[#1E1E1E]">
       <div className="mx-auto max-w-7xl px-6 pt-6">
-        {/* Barra roja completa */}
         <nav
           aria-label="Top Navigation"
           className="flex items-center justify-between rounded-2xl bg-[#D90429] px-5 py-3"
         >
-          {/* Título blanco sobre la barra roja */}
           <Link to="/" className="text-xl font-bold tracking-wide text-white">
             {title}
           </Link>
 
-          {/* Lado derecho */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {/* 🎞 Movies */}
+            {isAdmin && (
+              <Link
+                to="/movies"
+                className={`hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition
+                  ${
+                    isMoviesRoute
+                      ? 'bg-[#FFDA63] text-[#1E1E1E] shadow-md'
+                      : 'text-white/90 hover:bg-[#BF0320] hover:text-white'
+                  }
+                `}
+              >
+                🎞 Movies
+              </Link>
+            )}
+
+            {/* 🎭 Rooms */}
+            {isAdmin && (
+              <Link
+                to="/rooms"
+                className={`hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition
+                  ${
+                    isRoomsRoute
+                      ? 'bg-[#FFDA63] text-[#1E1E1E] shadow-md'
+                      : 'text-white/90 hover:bg-[#BF0320] hover:text-white'
+                  }
+                `}
+              >
+                🎭 Rooms
+              </Link>
+            )}
+
+            {/* 🎟 Screenings */}
+            {isAdmin && (
+              <Link
+                to="/screenings"
+                className={`hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition
+                  ${
+                    isScreeningsRoute
+                      ? 'bg-[#FFDA63] text-[#1E1E1E] shadow-md'
+                      : 'text-white/90 hover:bg-[#BF0320] hover:text-white'
+                  }
+                `}
+              >
+                🎟 Screenings
+              </Link>
+            )}
+
+            {/* Login / user menu */}
             {!authenticated ? (
               <button
                 onClick={login}
@@ -69,16 +127,10 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
               <div className="relative">
                 <button
                   ref={buttonRef}
-                  type="button"
-                  aria-haspopup="menu"
-                  aria-expanded={open}
-                  onClick={() => setOpen(v => !v)}
-                  className="flex items-center gap-3 rounded-full bg-[#333333] pl-2 pr-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                  onClick={() => setOpen((v) => !v)}
+                  className="flex items-center gap-3 rounded-full bg-[#333333] pl-2 pr-3 py-1 text-white"
                 >
-                  <span
-                    aria-hidden
-                    className="grid h-8 w-8 place-items-center rounded-full bg-[#FFDA63] text-[#333333] text-sm font-bold"
-                  >
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFDA63] text-[#333333] text-sm font-bold">
                     {initial}
                   </span>
                   <span className="text-sm font-medium">{username}</span>
@@ -86,7 +138,6 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
                     className={`h-4 w-4 transition ${open ? 'rotate-180' : ''}`}
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    aria-hidden="true"
                   >
                     <path
                       fillRule="evenodd"
@@ -99,16 +150,13 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
                 {open && (
                   <div
                     ref={menuRef}
-                    role="menu"
-                    aria-label="User menu"
                     className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-xl border border-[#333333] bg-[#1E1E1E] shadow-lg"
                   >
                     {isAdmin && (
                       <>
                         <button
-                          role="menuitem"
                           onClick={goManageUsers}
-                          className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333] focus:outline-none"
+                          className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333]"
                         >
                           Manage Users
                         </button>
@@ -116,9 +164,8 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
                       </>
                     )}
                     <button
-                      role="menuitem"
                       onClick={logout}
-                      className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333] focus:outline-none"
+                      className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333]"
                     >
                       logout
                     </button>

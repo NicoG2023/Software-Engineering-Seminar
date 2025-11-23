@@ -27,17 +27,17 @@ COPY build.gradle settings.gradle gradle.properties ./
 RUN ./gradlew --no-daemon dependencies || true
 
 # ----------------------------------------------------------
-# 📁 Copiamos el código fuente de la app
+# Se copia el código fuente de la app
 # ----------------------------------------------------------
 COPY src ./src
 
 # ----------------------------------------------------------
-# 🧱 Compilamos el proyecto en modo fast-jar (más liviano)
+# Se compila el proyecto en modo fast-jar (más liviano)
 # ----------------------------------------------------------
 RUN ./gradlew --no-daemon clean build -Dquarkus.package.type=fast-jar
 
 # ==========================================================
-# 🚀 Etapa 2: Ejecución (Runner)
+# Ejecución (Runner)
 # ==========================================================
 FROM eclipse-temurin:21-jre AS runner
 

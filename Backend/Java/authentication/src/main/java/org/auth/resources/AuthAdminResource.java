@@ -46,7 +46,7 @@ public class AuthAdminResource {
     }
 
     /* SCHEMAS */
-
+    @SuppressWarnings("deprecation")
     @Schema(name = "CreateUserRequest", description = "Payload to create a new user.")
     public static class CreateUserReq {
         @Schema(required = true, example = "Jhon Doe")
@@ -65,12 +65,14 @@ public class AuthAdminResource {
         public Boolean enabled = Boolean.TRUE;
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "CreateUserResponse", description = "Response containing the created user's identifier.")
     public static class CreateUserRes {
         @Schema(example = "5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab")
         public String id;
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "PasswordRequest", description = "Set or reset a user's password.")
     public static class PasswordReq {
         @Schema(required = true, example = "N3wP4ssword!")
@@ -80,18 +82,21 @@ public class AuthAdminResource {
         public Boolean temporary = Boolean.FALSE;
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "EnabledRequest", description = "Enable or disable a user account.")
     public static class EnabledReq {
         @Schema(required = true, example = "false")
         public Boolean enabled;
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "RolesRequest", description = "Realm roles to add or remove for a user.")
     public static class RolesReq {
         @Schema(required = true, example = "[\"Customer\",\"client\"]")
         public List<String> roles;
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "ErrorResponse", description = "Standard error payload.")
     public static class ErrorResponse {
         @Schema(example = "No se puede activar/desactivar un administrador")
@@ -101,6 +106,7 @@ public class AuthAdminResource {
         public String message;
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "UserSummary", description = "Basic user summary as returned by Keycloak list endpoint.")
     public static class UserSummary {
         @Schema(example = "5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab") public String id;
@@ -110,6 +116,7 @@ public class AuthAdminResource {
         // Additional fields may be returned by Keycloak; this model is illustrative for documentation.
     }
 
+    @SuppressWarnings("deprecation")
     @Schema(name = "UserDetail", description = "Detailed user with realm roles injected.")
     public static class UserDetail {
         @Schema(example = "5b2a9f0a-8d7a-4b1e-9c2b-1234567890ab") public String id;

@@ -1,12 +1,17 @@
 import axios from 'axios';
-// import { keycloak } from '../auth/keycloak';
+import { keycloak } from '../auth/keycloak';
 
 export const http = axios.create({
-  baseURL: '', // Eliminamos la dependencia de variables de entorno
+  baseURL: import.meta.env.VITE_API_BASE as string,
 });
 
-// Deshabilitamos temporalmente la autenticación
 http.interceptors.request.use(async (config) => {
-  // Autenticación deshabilitada temporalmente
+  if (keycloak.authenticated) {
+    await keycloak.updateToken(60).catch(() => keycloak.login());
+    if (keycloak.token) {
+      config.headers = config.headers ?? {};
+      (config.headers as any).Authorization = `Bearer ${keycloak.token}`;
+    }
+  }
   return config;
 });

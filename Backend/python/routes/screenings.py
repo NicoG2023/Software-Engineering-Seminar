@@ -1,3 +1,4 @@
+# routes/screenings.py
 from flask import Blueprint, jsonify, request
 from database import db
 from models import Screening, Movie, TheaterRoom
@@ -5,6 +6,9 @@ from datetime import datetime, date
 
 screenings_bp = Blueprint('screenings', __name__)
 
+# -------------------------------
+# Create a new screening
+# -------------------------------
 @screenings_bp.route('/screenings', methods=['POST'])
 def create_screening():
     """
@@ -20,7 +24,8 @@ def create_screening():
       "movie_id": 1,
       "room_id": 1,
       "date": "2025-01-10",
-      "time": "19:30"
+      "time": "19:30",
+      "price": 25000.0   // optional
     }
     ```
 
@@ -28,50 +33,81 @@ def create_screening():
       - **201 Created**
         ```json
         {
-          "message": "Screening created successfully"
+          "message": "Screening created successfully",
+          "id": 10
         }
         ```
-      - **400 Bad Request**
+      - **400 Bad Request** (varios casos)
         ```json
-        {
-          "error": "Invalid movie or room"
-        }
+        { "error": "Missing required fields" }
         ```
-        or
         ```json
-        {
-          "error": "Cannot schedule screenings in the past"
-        }
+        { "error": "Invalid date format, expected YYYY-MM-DD" }
         ```
-        or
         ```json
-        {
-          "error": "Scheduling conflict detected"
-        }
+        { "error": "Invalid time format, expected HH:MM" }
+        ```
+        ```json
+        { "error": "Invalid movie or room" }
+        ```
+        ```json
+        { "error": "Movie or room not available" }
+        ```
+        ```json
+        { "error": "Cannot schedule screenings in the past" }
+        ```
+        ```json
+        { "error": "Scheduling conflict detected" }
         ```
 
     Description:
       Creates a new screening for a given movie and theater room.
       It validates:
+        - that all required fields are present,
         - that the movie and room exist,
+        - that the movie is not soft-deleted and the room is active,
         - that the date is not in the past,
         - and that there is no screening conflict for the same room/date/time.
+      It initializes `available_seats` with the room capacity and optionally
+      sets a price.
     """
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    movie = Movie.query.get(data.get('movie_id'))
-    room = TheaterRoom.query.get(data.get('room_id'))
+    movie_id = data.get('movie_id')
+    room_id = data.get('room_id')
+    date_str = data.get('date')
+    time_str = data.get('time')
+
+    if not all([movie_id, room_id, date_str, time_str]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Buscar movie y room
+    movie = Movie.query.get(movie_id)
+    room = TheaterRoom.query.get(room_id)
 
     if not movie or not room:
         return jsonify({"error": "Invalid movie or room"}), 400
 
-    screening_date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-    screening_time = datetime.strptime(data['time'], "%H:%M").time()
+    # Validar estado de movie y room
+    if getattr(movie, "is_deleted", False) or not room.is_active:
+        return jsonify({"error": "Movie or room not available"}), 400
 
+    # Parsear fecha y hora
+    try:
+        screening_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
+
+    try:
+        screening_time = datetime.strptime(time_str, "%H:%M").time()
+    except ValueError:
+        return jsonify({"error": "Invalid time format, expected HH:MM"}), 400
+
+    # No permitir fechas en el pasado
     if screening_date < date.today():
         return jsonify({"error": "Cannot schedule screenings in the past"}), 400
 
-    # Usar is_deleted y los nombres correctos de columnas
+    # Comprobar conflictos en la misma sala/fecha/hora
     conflict = Screening.query.filter_by(
         room_id=room.id_room,
         date=screening_date,
@@ -82,18 +118,36 @@ def create_screening():
     if conflict:
         return jsonify({"error": "Scheduling conflict detected"}), 400
 
+    # Precio opcional
+    raw_price = data.get("price")
+    price_value = None
+    if raw_price is not None:
+        try:
+            price_value = float(raw_price)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid price"}), 400
+
+    # Crear screening
     new_screening = Screening(
         movie_id=movie.id_movie,
         room_id=room.id_room,
         date=screening_date,
-        time=screening_time
+        time=screening_time,
+        price=price_value,
+        available_seats=room.capacity,  # inicializamos con la capacidad total
     )
     db.session.add(new_screening)
     db.session.commit()
 
-    return jsonify({"message": "Screening created successfully"}), 201
+    return jsonify({
+        "message": "Screening created successfully",
+        "id": new_screening.id_screening
+    }), 201
 
 
+# -------------------------------
+# Get screenings by movie
+# -------------------------------
 @screenings_bp.route('/screenings/<int:movie_id>', methods=['GET'])
 def get_screenings_by_movie(movie_id):
     """
@@ -104,7 +158,7 @@ def get_screenings_by_movie(movie_id):
       - **URL:** `/api/screenings/{movie_id}`
 
     Path parameters:
-      - `movie_id` (integer, required): movie identifier.
+      - `movie_id` (integer, required): Movie identifier.
 
     Responses:
       - **200 OK**
@@ -114,13 +168,17 @@ def get_screenings_by_movie(movie_id):
             "id": 10,
             "date": "2025-01-10",
             "time": "19:30",
-            "room": "Room 1"
+            "room": "Room 1",
+            "room_id": 1,
+            "price": 25000.0,
+            "available_seats": 80
           }
         ]
         ```
 
     Description:
-      Returns all non-deleted screenings for the given movie (`deleted = False`).
+      Returns all non-deleted screenings for the given movie (`is_deleted = False`),
+      including basic information about date, time, room, price and available seats.
     """
     screenings = Screening.query.filter_by(
         movie_id=movie_id,
@@ -132,12 +190,207 @@ def get_screenings_by_movie(movie_id):
             "id": s.id_screening,
             "date": s.date.isoformat(),
             "time": s.time.strftime("%H:%M"),
-            "room": s.room.name
+            "room": s.room.name if s.room else None,
+            "room_id": s.room_id,
+            "price": float(s.price) if s.price is not None else None,
+            "available_seats": s.available_seats,
         }
         for s in screenings
     ]), 200
 
 
+# -------------------------------
+# Get single screening by ID
+# -------------------------------
+@screenings_bp.route('/screenings/id/<int:id>', methods=['GET'])
+def get_screening(id):
+    """
+    Get a single screening by its ID.
+
+    OpenAPI summary:
+      - **Method:** GET
+      - **URL:** `/api/screenings/id/{id}`
+
+    Path parameters:
+      - `id` (integer, required): Screening identifier.
+
+    Responses:
+      - **200 OK**
+        ```json
+        {
+          "id": 10,
+          "movie_id": 1,
+          "room_id": 1,
+          "date": "2025-01-10",
+          "time": "19:30",
+          "price": 25000.0,
+          "available_seats": 80,
+          "room": "Room 1"
+        }
+        ```
+      - **404 Not Found**
+        ```json
+        { "error": "Screening not found" }
+        ```
+
+    Description:
+      Returns a single non-deleted screening with all its core fields.
+      Useful for edit forms in the admin UI.
+    """
+    screening = Screening.query.filter_by(
+        id_screening=id,
+        is_deleted=False
+    ).first()
+
+    if not screening:
+        return jsonify({"error": "Screening not found"}), 404
+
+    return jsonify({
+        "id": screening.id_screening,
+        "movie_id": screening.movie_id,
+        "room_id": screening.room_id,
+        "date": screening.date.isoformat(),
+        "time": screening.time.strftime("%H:%M"),
+        "price": float(screening.price) if screening.price is not None else None,
+        "available_seats": screening.available_seats,
+        "room": screening.room.name if screening.room else None,
+    }), 200
+
+
+# -------------------------------
+# Update a screening
+# -------------------------------
+@screenings_bp.route('/screenings/<int:id>', methods=['PUT'])
+def update_screening(id):
+    """
+    Update a screening.
+
+    OpenAPI summary:
+      - **Method:** PUT
+      - **URL:** `/api/screenings/{id}`
+
+    Path parameters:
+      - `id` (integer, required): Screening identifier.
+
+    Request body (application/json) – all fields optional:
+    ```json
+    {
+      "movie_id": 1,
+      "room_id": 2,
+      "date": "2025-01-11",
+      "time": "21:00",
+      "price": 27000.0,
+      "available_seats": 75
+    }
+    ```
+
+    Responses:
+      - **200 OK**
+        ```json
+        { "message": "Screening updated successfully" }
+        ```
+      - **400 Bad Request**
+        (mismos tipos de errores que en el POST: formatos inválidos, conflictos, etc.)
+      - **404 Not Found**
+        Si el screening no existe o está soft-deleted.
+
+    Description:
+      Updates one or more fields of an existing screening. It:
+        - ignores fields not present in the body,
+        - validates movie and room if changed,
+        - validates date/time formatting and that they are not in the past,
+        - checks for scheduling conflicts in the room/date/time,
+        - allows updating price and available_seats.
+    """
+    screening = Screening.query.filter_by(
+        id_screening=id,
+        is_deleted=False
+    ).first()
+
+    if not screening:
+        return jsonify({"error": "Screening not found"}), 404
+
+    data = request.get_json() or {}
+
+    # Movie change (opcional)
+    movie_id = data.get('movie_id')
+    if movie_id is not None:
+        movie = Movie.query.get(movie_id)
+        if not movie or getattr(movie, "is_deleted", False):
+            return jsonify({"error": "Invalid or unavailable movie"}), 400
+        screening.movie_id = movie.id_movie
+
+    # Room change (opcional)
+    room_id = data.get('room_id')
+    if room_id is not None:
+        room = TheaterRoom.query.get(room_id)
+        if not room or not room.is_active:
+            return jsonify({"error": "Invalid or inactive room"}), 400
+        screening.room_id = room.id_room
+        # Opcional: resetear available_seats a la nueva capacidad (si quisieras)
+        # screening.available_seats = room.capacity
+
+    # Date change (opcional)
+    date_str = data.get('date')
+    if date_str is not None:
+        try:
+            new_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({"error": "Invalid date format, expected YYYY-MM-DD"}), 400
+        if new_date < date.today():
+            return jsonify({"error": "Cannot schedule screenings in the past"}), 400
+        screening.date = new_date
+
+    # Time change (opcional)
+    time_str = data.get('time')
+    if time_str is not None:
+        try:
+            new_time = datetime.strptime(time_str, "%H:%M").time()
+        except ValueError:
+            return jsonify({"error": "Invalid time format, expected HH:MM"}), 400
+        screening.time = new_time
+
+    # Price change (opcional)
+    if 'price' in data:
+        raw_price = data.get('price')
+        if raw_price is None:
+            screening.price = None
+        else:
+            try:
+                screening.price = float(raw_price)
+            except (TypeError, ValueError):
+                return jsonify({"error": "Invalid price"}), 400
+
+    # Available seats change (opcional)
+    if 'available_seats' in data:
+        raw_seats = data.get('available_seats')
+        try:
+            seats_int = int(raw_seats)
+            if seats_int < 0:
+                raise ValueError()
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid available_seats"}), 400
+        screening.available_seats = seats_int
+
+    # Verificar conflicto con otros screenings de la misma sala/fecha/hora
+    conflict = Screening.query.filter(
+        Screening.id_screening != screening.id_screening,
+        Screening.room_id == screening.room_id,
+        Screening.date == screening.date,
+        Screening.time == screening.time,
+        Screening.is_deleted == False  # noqa: E712
+    ).first()
+
+    if conflict:
+        return jsonify({"error": "Scheduling conflict detected"}), 400
+
+    db.session.commit()
+    return jsonify({"message": "Screening updated successfully"}), 200
+
+
+# -------------------------------
+# Soft delete a screening
+# -------------------------------
 @screenings_bp.route('/screenings/<int:id>', methods=['DELETE'])
 def delete_screening(id):
     """
@@ -148,23 +401,87 @@ def delete_screening(id):
       - **URL:** `/api/screenings/{id}`
 
     Path parameters:
-      - `id` (integer, required): screening identifier.
+      - `id` (integer, required): Screening identifier.
 
     Responses:
       - **200 OK**
         ```json
-        {
-          "message": "Screening deleted (soft delete)"
-        }
+        { "message": "Screening deleted (soft delete)" }
         ```
       - **404 Not Found**
-        If the screening ID does not exist.
+        ```json
+        { "error": "Screening not found" }
+        ```
 
     Description:
-      Performs a *soft delete* on the screening by setting `deleted = True`,
+      Performs a *soft delete* on the screening by setting `is_deleted = True`,
       keeping the record in the database for audit/history purposes.
     """
-    screening = Screening.query.get_or_404(id)
+    screening = Screening.query.filter_by(id_screening=id).first()
+
+    if not screening or screening.is_deleted:
+        return jsonify({"error": "Screening not found"}), 404
+
     screening.is_deleted = True
     db.session.commit()
     return jsonify({"message": "Screening deleted (soft delete)"}), 200
+
+# -------------------------------
+# Get all screenings (admin use)
+# -------------------------------
+@screenings_bp.route('/screenings-all', methods=['GET'])
+def get_all_screenings():
+    """
+    Get all non-deleted screenings.
+
+    OpenAPI summary:
+      - **Method:** GET
+      - **URL:** `/api/screenings-all`
+
+    Responses:
+      - **200 OK**
+        ```json
+        [
+          {
+            "id": 12,
+            "movie_id": 3,
+            "room_id": 1,
+            "date": "2025-01-12",
+            "time": "18:00",
+            "price": 20000.0,
+            "available_seats": 60,
+            "room": "Sala Principal",
+            "movie": "Interstellar"
+          }
+        ]
+        ```
+
+    Description:
+      Returns **every** screening that is not soft-deleted (`is_deleted = False`).
+      This is intended for **admin dashboards** where all screenings must be shown
+      regardless of movie.
+
+      It includes:
+        - basic screening fields,
+        - room name,
+        - movie title,
+        - availability info,
+        - formatted date and time.
+    """
+    screenings = Screening.query.filter_by(is_deleted=False).all()
+
+    result = []
+    for s in screenings:
+        result.append({
+            "id": s.id_screening,
+            "movie_id": s.movie_id,
+            "room_id": s.room_id,
+            "date": s.date.isoformat(),
+            "time": s.time.strftime("%H:%M"),
+            "price": float(s.price) if s.price is not None else None,
+            "available_seats": s.available_seats,
+            "room": s.room.name if s.room else None,
+            "movie": s.movie.title if s.movie else None,
+        })
+
+    return jsonify(result), 200
