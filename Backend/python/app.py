@@ -24,6 +24,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev_secret_key")
 
 db.init_app(app)

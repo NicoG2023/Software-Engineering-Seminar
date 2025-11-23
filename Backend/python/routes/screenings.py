@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from database import db
 from models import Screening, Movie, TheaterRoom
 from datetime import datetime, date
+import math
 
 screenings_bp = Blueprint('screenings', __name__)
 
@@ -82,8 +83,8 @@ def create_screening():
         return jsonify({"error": "Missing required fields"}), 400
 
     # Buscar movie y room
-    movie = Movie.query.get(movie_id)
-    room = TheaterRoom.query.get(room_id)
+    movie = db.session.get(Movie, movie_id)
+    room = db.session.get(TheaterRoom, room_id)
 
     if not movie or not room:
         return jsonify({"error": "Invalid movie or room"}), 400
@@ -315,7 +316,7 @@ def update_screening(id):
     # Movie change (opcional)
     movie_id = data.get('movie_id')
     if movie_id is not None:
-        movie = Movie.query.get(movie_id)
+        movie = db.session.get(Movie, movie_id)
         if not movie or getattr(movie, "is_deleted", False):
             return jsonify({"error": "Invalid or unavailable movie"}), 400
         screening.movie_id = movie.id_movie
@@ -323,7 +324,7 @@ def update_screening(id):
     # Room change (opcional)
     room_id = data.get('room_id')
     if room_id is not None:
-        room = TheaterRoom.query.get(room_id)
+        room = db.session.get(TheaterRoom, room_id)
         if not room or not room.is_active:
             return jsonify({"error": "Invalid or inactive room"}), 400
         screening.room_id = room.id_room
@@ -352,14 +353,19 @@ def update_screening(id):
 
     # Price change (opcional)
     if 'price' in data:
-        raw_price = data.get('price')
-        if raw_price is None:
-            screening.price = None
-        else:
-            try:
-                screening.price = float(raw_price)
-            except (TypeError, ValueError):
-                return jsonify({"error": "Invalid price"}), 400
+      raw_price = data.get('price')
+      if raw_price is None:
+          screening.price = None
+      else:
+          try:
+              price_value = float(raw_price)
+          except (TypeError, ValueError):
+              return jsonify({"error": "Invalid price"}), 400
+
+          if not math.isfinite(price_value):
+              return jsonify({"error": "Invalid price"}), 400
+
+          screening.price = price_value
 
     # Available seats change (opcional)
     if 'available_seats' in data:

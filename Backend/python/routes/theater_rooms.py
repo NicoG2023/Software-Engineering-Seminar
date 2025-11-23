@@ -181,7 +181,7 @@ def get_room(id):
     Description:
       Returns a single theater room, active or inactive.
     """
-    room = TheaterRoom.query.get(id)
+    room = db.session.get(TheaterRoom, id)
     if not room:
         return jsonify({"error": "Room not found"}), 404
 
@@ -244,7 +244,7 @@ def update_room(id):
       in the request body is left unchanged. Allow toggling `is_active`, which
       is used to prevent new screenings in inactive rooms.
     """
-    room = TheaterRoom.query.get(id)
+    room = db.session.get(TheaterRoom, id)
     if not room:
         return jsonify({"error": "Room not found"}), 404
 
@@ -311,7 +311,7 @@ def delete_room(id):
       Existing screenings that reference this room remain stored for history,
       but new screenings should not be created for inactive rooms.
     """
-    room = TheaterRoom.query.get(id)
+    room = db.session.get(TheaterRoom, id)
     if not room or not room.is_active:
         return jsonify({"error": "Room not found"}), 404
 
