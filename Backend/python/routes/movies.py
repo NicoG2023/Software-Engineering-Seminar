@@ -14,6 +14,14 @@ def create_movie():
     if not data or not data.get('title') or not data.get('genre') or not data.get('duration'):
         return jsonify({"error": "Missing required fields"}), 400
 
+    # Check if movie with same title already exists and is preloaded
+    existing = Movie.query.filter_by(title=data['title'], is_preloaded=True).first()
+    if existing:
+        return jsonify({
+            "error": "Cannot create movie. A preloaded movie with this title already exists.",
+            "preloaded_movie_id": existing.id_movie
+        }), 403
+
     # Buscar o crear el género
     genre_name = data['genre'].strip()
     genre = Genre.query.filter_by(name=genre_name).first()
@@ -22,11 +30,12 @@ def create_movie():
         db.session.add(genre)
         db.session.commit()
 
-    # Crear la película
+    # Crear la película (solo permitido si no está precargada)
     movie = Movie(
         title=data['title'],
         duration_minutes=int(data['duration']),
-        genre=genre
+        genre=genre,
+        is_preloaded=False  # User-created movies are not preloaded
     )
     db.session.add(movie)
     db.session.commit()
@@ -61,7 +70,15 @@ def list_movies():
             "id": m.id_movie,
             "title": m.title,
             "genre": m.genre.name if m.genre else None,
-            "duration": m.duration_minutes
+            "duration": m.duration_minutes,
+            "year": m.year,
+            "director": m.director,
+            "actors": m.actors,
+            "plot": m.plot,
+            "poster_url": m.poster_url,
+            "rating": m.rating,
+            "imdb_id": m.imdb_id,
+            "is_preloaded": m.is_preloaded
         }
         for m in movies
     ]), 200
@@ -73,6 +90,14 @@ def list_movies():
 @movies_bp.route('/movies/<int:id>', methods=['PUT'])
 def update_movie(id):
     movie = Movie.query.get_or_404(id)
+    
+    # Prevent modification of preloaded movies
+    if movie.is_preloaded:
+        return jsonify({
+            "error": "Cannot modify preloaded movies from OMDB API",
+            "is_preloaded": True
+        }), 403
+    
     data = request.get_json()
 
     # Actualizar título y duración
@@ -100,6 +125,14 @@ def update_movie(id):
 @movies_bp.route('/movies/<int:id>', methods=['DELETE'])
 def delete_movie(id):
     movie = Movie.query.get_or_404(id)
+    
+    # Prevent deletion of preloaded movies
+    if movie.is_preloaded:
+        return jsonify({
+            "error": "Cannot delete preloaded movies from OMDB API",
+            "is_preloaded": True
+        }), 403
+    
     movie.is_deleted = True  # Soft delete flag
     db.session.commit()
 

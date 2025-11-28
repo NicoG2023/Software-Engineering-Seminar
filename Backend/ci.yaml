@@ -1,0 +1,58 @@
+name: CI Pipeline (Python + Quarkus Java)
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+
+  ############################################
+  # PYTHON ANALYSIS (Black)
+  ############################################
+  python-quality:
+    name: Python Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Python dependencies
+        run: |
+          pip install .
+          pip install ".[dev]"
+
+      - name: Run Black check
+        run: black --check .
+
+  ############################################
+  # JAVA (Quarkus + Gradle)
+  ############################################
+  java-build:
+    name: Java Quarkus Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"   # versión ideal para Quarkus moderno
+
+      - name: Grant execution rights
+        run: chmod +x gradlew
+
+      - name: Build Quarkus project
+        run: ./gradlew build --no-daemon
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon

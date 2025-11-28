@@ -61,6 +61,28 @@ from routes.movies import movies_bp
 app.register_blueprint(movies_bp, url_prefix='/api')
 
 # ---------------------------
+# CLI Commands
+# ---------------------------
+@app.cli.command('preload-movies')
+def preload_movies_command():
+    """Preload movies from monthly report using OMDB API"""
+    import os
+    from scripts.preload_movies import preload_movies_from_json
+    
+    json_path = os.path.join(
+        os.path.dirname(__file__), 
+        'data', 
+        'monthly_movies.json'
+    )
+    
+    if not os.path.exists(json_path):
+        print(f"❌ Error: monthly_movies.json not found at {json_path}")
+        return
+    
+    preload_movies_from_json(app, json_path)
+    print("✅ Preload completed!")
+
+# ---------------------------
 # Entry point
 # ---------------------------
 if __name__ == "__main__":

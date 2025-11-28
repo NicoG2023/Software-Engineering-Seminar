@@ -29,6 +29,16 @@ class Movie(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    
+    # OMDB API fields
+    imdb_id = db.Column(db.String(20), unique=True, nullable=True)
+    year = db.Column(db.String(10), nullable=True)
+    director = db.Column(db.String(200), nullable=True)
+    actors = db.Column(db.String(500), nullable=True)
+    plot = db.Column(db.Text, nullable=True)
+    poster_url = db.Column(db.String(500), nullable=True)
+    rating = db.Column(db.Float, nullable=True)
+    is_preloaded = db.Column(db.Boolean, default=False)
 
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id_genre'))
     genre = db.relationship('Genre', back_populates='movies')
