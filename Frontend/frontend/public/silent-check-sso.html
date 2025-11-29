@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Silent SSO</title>
+  </head>
+  <body>
+    <script>
+      // Archivo requerido por Keycloak para el "silent check-sso".
+      // Envía la URL completa de vuelta al parent (la SPA).
+      window.parent.postMessage(window.location.href, window.location.origin);
+    </script>
+  </body>
+</html>

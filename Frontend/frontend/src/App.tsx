@@ -8,7 +8,7 @@ import AppLayout from './app/AppLayout';
 
 // Páginas
 import Home from './pages/Home';
-import MovieList from './pages/movies/MovieList';
+import MovieList from './pages/Admin/movies/MovieList';
 // importa más páginas según necesites (Login, Admin, etc.)
 
 export default function App() {

@@ -2,12 +2,18 @@
 FROM node:20-alpine
 WORKDIR /app
 
-# Instala deps
-COPY package*.json ./
-RUN npm install
+# 1. Instalar pnpm globalmente
+RUN npm install -g pnpm
 
-# Copia código (en compose además montamos volumen para hot-reload)
+# 2. Copiar solo lo necesario para instalar deps usando caché
+COPY package.json pnpm-lock.yaml ./
+
+# 3. Instalar dependencias con pnpm
+RUN pnpm install
+
+# 4. Copiar el resto del código
 COPY . .
 
 EXPOSE 5173
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+CMD ["pnpm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
