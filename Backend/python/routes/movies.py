@@ -137,3 +137,116 @@ def delete_movie(id):
     db.session.commit()
 
     return jsonify({"message": "Movie deleted (soft delete)"}), 200
+
+
+# -------------------------------
+# Seed monthly movies (simple, no OMDB)
+# -------------------------------
+@movies_bp.route('/movies/seed-monthly-simple', methods=['POST'])
+def seed_monthly_simple():
+    import json
+    try:
+        with open('data/monthly_movies.json', 'r') as f:
+            data = json.load(f)
+    except Exception:
+        return jsonify({"error": "monthly_movies.json not found"}), 404
+
+    default_genre_name = 'General'
+    default_duration = 120
+    genre = Genre.query.filter_by(name=default_genre_name).first()
+    if not genre:
+        genre = Genre(name=default_genre_name)
+        db.session.add(genre)
+        db.session.commit()
+
+    created = 0
+    for m in data.get('movies', []):
+        title = m.get('title')
+        if not title:
+            continue
+        if Movie.query.filter_by(title=title).first():
+            continue
+        movie = Movie(title=title, duration_minutes=default_duration, genre=genre, is_preloaded=False)
+        db.session.add(movie)
+        created += 1
+    db.session.commit()
+
+    return jsonify({"message": "Seeded monthly movies", "created": created}), 201
+
+
+# -------------------------------
+# Seed monthly movies via OMDB enrichment
+# -------------------------------
+@movies_bp.route('/movies/seed-monthly', methods=['POST'])
+def seed_monthly_omdb():
+    import json
+    from services.omdb_service import OMDBService
+
+    try:
+        with open('data/monthly_movies.json', 'r') as f:
+            data = json.load(f)
+    except Exception:
+        return jsonify({"error": "monthly_movies.json not found"}), 404
+
+    movies_list = data.get('movies', [])
+    service = OMDBService()
+    created = 0
+    updated = 0
+    skipped = 0
+
+    for m in movies_list:
+        title = m.get('title')
+        year = m.get('year')
+        if not title:
+            continue
+        raw = service.get_movie_details(title, year)
+        if not raw:
+            continue
+        parsed = service.parse_movie_data(raw)
+
+        genre_name = parsed.get('genre') or 'Unknown'
+        genre = Genre.query.filter_by(name=genre_name).first()
+        if not genre:
+            genre = Genre(name=genre_name)
+            db.session.add(genre)
+            db.session.commit()
+
+        existing = Movie.query.filter_by(imdb_id=parsed.get('imdb_id')).first()
+        if existing:
+            if not existing.is_preloaded:
+                existing.is_preloaded = True
+                existing.year = parsed.get('year')
+                existing.director = parsed.get('director')
+                existing.actors = parsed.get('actors')
+                existing.plot = parsed.get('plot')
+                existing.poster_url = parsed.get('poster_url')
+                existing.rating = parsed.get('rating')
+                existing.genre = genre
+                updated += 1
+            else:
+                skipped += 1
+            db.session.commit()
+            continue
+
+        movie = Movie(
+            title=parsed.get('title'),
+            duration_minutes=parsed.get('duration_minutes'),
+            imdb_id=parsed.get('imdb_id'),
+            year=parsed.get('year'),
+            director=parsed.get('director'),
+            actors=parsed.get('actors'),
+            plot=parsed.get('plot'),
+            poster_url=parsed.get('poster_url'),
+            rating=parsed.get('rating'),
+            is_preloaded=True,
+            genre=genre,
+        )
+        db.session.add(movie)
+        created += 1
+    db.session.commit()
+    return jsonify({
+        "message": "Monthly movies seeded with OMDB enrichment",
+        "created": created,
+        "updated": updated,
+        "skipped": skipped,
+    }), 201

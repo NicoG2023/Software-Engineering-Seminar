@@ -7,7 +7,7 @@ export interface Room {
   location?: string
 }
 
-const BASE = (import.meta.env.VITE_BUSINESS_API_URL ?? 'http://localhost:5000') + '/api'
+const BASE = '/api'
 
 export const roomsApi = {
   list: async (): Promise<Room[]> => {

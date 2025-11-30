@@ -56,9 +56,11 @@ def health():
 # ---------------------------
 from models import Movie
 from routes.movies import movies_bp
+from routes.screenings import screenings_bp
 
 # Register blueprint CON PREFIJO /api
 app.register_blueprint(movies_bp, url_prefix='/api')
+app.register_blueprint(screenings_bp, url_prefix='/api')
 
 # ---------------------------
 # CLI Commands

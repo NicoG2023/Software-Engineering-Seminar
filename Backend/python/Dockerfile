@@ -21,11 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ---------------------------
-# Instalación de dependencias Python
+# Python dependencies via pyproject.toml
 # ---------------------------
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir gunicorn
+COPY pyproject.toml /app/pyproject.toml
+RUN pip install --no-cache-dir .
 
 # ---------------------------
 # Copia del código de la app

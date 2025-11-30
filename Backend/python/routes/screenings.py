@@ -491,3 +491,71 @@ def get_all_screenings():
         })
 
     return jsonify(result), 200
+
+
+# -------------------------------
+# Seed sample screenings for current month
+# -------------------------------
+@screenings_bp.route('/screenings/seed-month', methods=['POST'])
+def seed_month_screenings():
+    """
+    Create sample screenings across the current month for existing movies.
+
+    Strategy:
+    - Use the first active room
+    - Create one screening per movie at 19:00 for each remaining day of current month
+    - Skip days in the past and skip conflicts
+    """
+    # find an active room
+    room = TheaterRoom.query.filter_by(is_active=True).order_by(TheaterRoom.id_room.asc()).first()
+    if not room:
+        return jsonify({"error": "No active rooms found"}), 400
+
+    # movies available (not deleted)
+    movies = Movie.query.filter_by(is_deleted=False).all()
+    if not movies:
+        return jsonify({"error": "No movies found"}), 400
+
+    # month iteration
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    # compute last day of month
+    if today.month == 12:
+        next_month_start = date(today.year + 1, 1, 1)
+    else:
+        next_month_start = date(today.year, today.month + 1, 1)
+    month_days = (next_month_start - month_start).days
+
+    created = 0
+    for day in range(1, month_days + 1):
+        d = date(today.year, today.month, day)
+        if d < today:
+            continue
+        time_1900 = datetime.strptime("19:00", "%H:%M").time()
+
+        for m in movies:
+            # skip deleted/preloaded flags do not matter for screening
+            # conflict check
+            conflict = Screening.query.filter_by(
+                room_id=room.id_room,
+                date=d,
+                time=time_1900,
+                is_deleted=False,
+                movie_id=m.id_movie,
+            ).first()
+            if conflict:
+                continue
+
+            new_s = Screening(
+                movie_id=m.id_movie,
+                room_id=room.id_room,
+                date=d,
+                time=time_1900,
+                price=None,
+                available_seats=room.capacity,
+            )
+            db.session.add(new_s)
+            created += 1
+
+    db.session.commit()
+    return jsonify({"message": "Month screenings seeded", "created": created}), 201

@@ -1,7 +1,7 @@
 // src/api/screeningsApi.ts
 import { http } from './http';
 
-const FLASK_API = `${import.meta.env.VITE_FLASK_API_URL as string}/api`;
+const API = `/api`;
 
 // ----------- Types -----------
 
@@ -38,35 +38,35 @@ export interface UpdateScreeningDto {
 export const screeningsApi = {
   /** Create new screening */
   create: async (payload: CreateScreeningDto): Promise<{ message: string; id: number }> => {
-    const response = await http.post(`${FLASK_API}/screenings`, payload);
+    const response = await http.post(`${API}/screenings`, payload);
     return response.data;
   },
 
   /** Get screenings by movie */
   getByMovie: async (movieId: number): Promise<Screening[]> => {
-    const response = await http.get(`${FLASK_API}/screenings/${movieId}`);
+    const response = await http.get(`${API}/screenings/${movieId}`);
     return response.data;
   },
 
   /** Get a single screening by ID */
   getById: async (id: number): Promise<Screening> => {
-    const response = await http.get(`${FLASK_API}/screenings/id/${id}`);
+    const response = await http.get(`${API}/screenings/id/${id}`);
     return response.data;
   },
 
   /** Update a screening */
   update: async (id: number, payload: UpdateScreeningDto): Promise<void> => {
-    await http.put(`${FLASK_API}/screenings/${id}`, payload);
+    await http.put(`${API}/screenings/${id}`, payload);
   },
 
   /** Soft delete a screening */
   delete: async (id: number): Promise<void> => {
-    await http.delete(`${FLASK_API}/screenings/${id}`);
+    await http.delete(`${API}/screenings/${id}`);
   },
 
   /** (Optional) get all screenings — útil para admin panel */
   getAll: async (): Promise<Screening[]> => {
-    const response = await http.get(`${FLASK_API}/screenings-all`);
+    const response = await http.get(`${API}/screenings-all`);
     return response.data;
   },
 };
