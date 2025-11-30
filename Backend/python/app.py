@@ -2,6 +2,9 @@ from flask import Flask, jsonify
 from database import db
 from dotenv import load_dotenv
 from flask_cors import CORS
+from routes.movies import movies_bp
+from routes.theater_rooms import theater_rooms_bp
+from routes.screenings import screenings_bp
 import os
 
 # ---------------------------
@@ -60,6 +63,7 @@ from routes.screenings import screenings_bp
 
 # Register blueprint CON PREFIJO /api
 app.register_blueprint(movies_bp, url_prefix='/api')
+app.register_blueprint(theater_rooms_bp, url_prefix='/api')
 app.register_blueprint(screenings_bp, url_prefix='/api')
 
 # Después de db.init_app(app) y de registrar blueprints

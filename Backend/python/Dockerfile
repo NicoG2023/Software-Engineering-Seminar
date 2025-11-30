@@ -1,14 +1,18 @@
-# Backend/Python/Dockerfile
+# Backend/python/Dockerfile
 FROM python:3.12-slim
 
 # ---------------------------
-# Variables de entorno
+# Environment variables
 # ---------------------------
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    POETRY_VERSION=1.8.3 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_CACHE_DIR=/tmp/poetry-cache
 
 # ---------------------------
-# Dependencias del sistema
+# System dependencies
 # ---------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -16,28 +20,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------
-# Directorio de trabajo
+# Working directory
 # ---------------------------
 WORKDIR /app
 
 # ---------------------------
-# Python dependencies via pyproject.toml
+# Install Poetry
 # ---------------------------
-COPY pyproject.toml /app/pyproject.toml
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
 
 # ---------------------------
-# Copia del código de la app
+# Install Python dependencies with Poetry
+# (copy only dependency files first to leverage Docker cache)
+# ---------------------------
+COPY pyproject.toml poetry.lock* /app/
+
+# Install only main dependencies (no dev tools like behave)
+RUN poetry install --no-root --only main \
+ && rm -rf "$POETRY_CACHE_DIR"
+
+# ---------------------------
+# Copy application code
 # ---------------------------
 COPY . /app
 
 # ---------------------------
-# Puerto expuesto
+# Exposed port
 # ---------------------------
 EXPOSE 5000
 
 # ---------------------------
-# Comando por defecto
+# Default command
 # ---------------------------
-# Usa gunicorn apuntando al objeto 'app' de tu módulo principal 'app.py'
+# Uses gunicorn, pointing to the 'app' object in main module 'app.py'
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]

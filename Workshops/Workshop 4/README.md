@@ -284,6 +284,133 @@ This containerized setup is the foundation for the **acceptance tests** and the 
 
 # 2. Acceptance Testing
 
+Aquí tienes un **README completo, profesional y perfectamente redactado en inglés**, listo para pegar en la sección **# 2. Acceptance Testing**.
+Incluye la imagen `All_Tests_Passed.png` y explica **todo el proceso (Cucumber + Behave + Feature files + Step definitions + Results)**.
+
+---
+
+# 2. Acceptance Testing (Cucumber / Behave)
+
+This project implements **Acceptance Testing** using the Cucumber philosophy (Gherkin syntax) combined with **Behave**, a Python BDD framework.
+The goal of these tests is to validate the system’s behavior from the perspective of real business requirements, ensuring that all core use cases work as expected under realistic workflows.
+
+---
+
+## 2.1. Testing Strategy
+
+The acceptance suite covers the three main functional modules of the Python microservice:
+
+### ✔ Movie Management
+
+* Create movies
+* Validate required fields
+* Update movies
+* Soft delete movies
+
+### ✔ Theater Room Management
+
+* Create rooms
+* Validate capacity
+* Soft delete rooms
+
+### ✔ Screening Scheduling
+
+* Create screenings for valid movies and rooms
+* Prevent screenings in the past
+
+These tests simulate live API calls against a running Flask backend using HTTP requests.
+Each scenario expresses user-centered behaviors using **Given / When / Then** steps.
+
+---
+
+## 2.2. Project Structure
+
+All acceptance tests are located inside the `/features` directory:
+
+```
+features/
+│
+├── movies.feature
+├── rooms.feature
+├── screenings.feature
+│
+├── steps/
+│   └── api_steps.py
+│
+└── environment.py
+```
+
+### **Feature Files (`*.feature`)**
+
+Each feature describes high-level system behavior using Gherkin syntax.
+
+### **Step Definitions (`api_steps.py`)**
+
+This file binds human-readable Gherkin steps to executable Python functions that make real HTTP requests to the backend.
+
+### **environment.py**
+
+This file defines global Behave settings such as the base URL for the microservice.
+
+---
+
+## 2.3. Running the Acceptance Tests
+
+Before executing the tests, ensure that:
+
+1. The Flask backend is running:
+
+```bash
+poetry run flask run
+```
+
+2. All dependencies are installed:
+
+```bash
+poetry install
+```
+
+3. Behave is available (installed under the dev group):
+
+```bash
+poetry add --group dev behave
+```
+
+To execute the full acceptance suite:
+
+```bash
+poetry run behave
+```
+
+Behave will automatically scan all `.feature` files and run each scenario sequentially.
+
+---
+
+## 2.4. Step Definitions (Summary)
+
+The tests use a reusable set of generic steps:
+
+* Sending POST, GET, PUT, DELETE requests
+* Asserting status codes
+* Validating JSON fields
+* Creating reusable resources (rooms, movies)
+* Creating screenings linked to previously created IDs
+
+All requests are executed against the real Flask API using the `requests` library.
+
+---
+
+## 2.5. Test Results
+
+All scenarios for **movies**, **theater rooms**, and **screenings** passed successfully.
+Below is the screenshot of the final execution summary:
+
+<p align="center">
+  <img src="./Cucumber/All_Tests_Passed.png" width="600px" />
+</p>
+
+The green output indicates that **every functional requirement defined in the acceptance criteria is fully satisfied**.
+
 # 3. Stress Testing
 
 ## 3.1 Stress Testing for the Java Microservice (JMeter)
