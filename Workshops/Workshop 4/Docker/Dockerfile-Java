@@ -1,0 +1,55 @@
+# ==========================================================
+# 🏗️  Stage 1: Build
+# ==========================================================
+FROM eclipse-temurin:21-jdk AS build
+
+# Working directory inside the container
+WORKDIR /workspace
+
+# ----------------------------------------------------------
+# 📦 Copy minimal files to leverage caching
+# ----------------------------------------------------------
+COPY gradlew ./
+# Install dos2unix to fix Windows CRLF format
+# and ensure execution permissions
+RUN apt-get update && apt-get install -y dos2unix && \
+    dos2unix gradlew && chmod +x gradlew
+
+# Copy Gradle wrapper and config files
+COPY gradle ./gradle
+COPY build.gradle settings.gradle gradle.properties ./
+# If using version catalog:
+# COPY gradle/libs.versions.toml gradle/libs.versions.toml
+
+# ----------------------------------------------------------
+# 🧰 Download dependencies without compiling (uses cache)
+# ----------------------------------------------------------
+RUN ./gradlew --no-daemon dependencies || true
+
+# ----------------------------------------------------------
+# Copy application source code
+# ----------------------------------------------------------
+COPY src ./src
+
+# ----------------------------------------------------------
+# Compile project using fast-jar (lighter)
+# ----------------------------------------------------------
+RUN ./gradlew --no-daemon clean build -Dquarkus.package.type=fast-jar
+
+# ==========================================================
+# 🏃 Runner
+# ==========================================================
+FROM eclipse-temurin:21-jre AS runner
+
+# Final working directory
+WORKDIR /app
+
+# Copy built application
+COPY --from=build /workspace/build/quarkus-app/ /app/
+
+# Network configuration
+ENV QUARKUS_HTTP_HOST=0.0.0.0
+EXPOSE 8080
+
+# Start the application
+CMD ["java", "-jar", "/app/quarkus-run.jar"]

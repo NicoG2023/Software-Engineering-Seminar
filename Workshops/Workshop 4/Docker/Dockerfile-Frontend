@@ -1,0 +1,19 @@
+# Frontend/frontend/Dockerfile.dev
+FROM node:20-alpine
+WORKDIR /app
+
+# 1. Install pnpm globally
+RUN npm install -g pnpm
+
+# 2. Copy only what is needed to install dependencies (use cache)
+COPY package.json pnpm-lock.yaml ./
+
+# 3. Install dependencies with pnpm
+RUN pnpm install
+
+# 4. Copy the rest of the code
+COPY . .
+
+EXPOSE 5173
+
+CMD ["pnpm", "run", "dev", "--", "--host", "0.0.0.0", "--port",  "5173"]
