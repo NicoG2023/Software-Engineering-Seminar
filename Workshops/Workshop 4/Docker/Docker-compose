@@ -1,0 +1,142 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-java
+    restart: always
+    environment:
+      MYSQL_DATABASE: keycloak
+      MYSQL_USER: keycloak
+      MYSQL_PASSWORD: keycloak
+      MYSQL_ROOT_PASSWORD: root
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - kc_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak", "-pkeycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "3306:3306"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql-db:3306/keycloak?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/realms:/opt/keycloak/data/import
+      - ../Frontend/themes:/opt/keycloak/themes
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  authentication:
+    build: ../Backend/Java/authentication
+    container_name: quarkus-auth
+    environment:
+      QUARKUS_OIDC_AUTH_SERVER_URL: ${QUARKUS_OIDC_AUTH_SERVER_URL}
+      QUARKUS_OIDC_CLIENT_ID: ${QUARKUS_OIDC_CLIENT_ID}
+      QUARKUS_OIDC_APP_TYPE: ${QUARKUS_OIDC_APP_TYPE}
+      QUARKUS_OIDC_AUDIENCE: ${QUARKUS_OIDC_AUDIENCE}
+      QUARKUS_OIDC_ROLES_SOURCE: ${QUARKUS_OIDC_ROLES_SOURCE}
+      QUARKUS_OIDC_ROLE_PATH: ${QUARKUS_OIDC_ROLE_PATH}
+      ADMIN_URL: ${ADMIN_URL}
+      REALM: ${REALM}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+      QUARKUS_PUBLIC_PATHS: ${QUARKUS_PUBLIC_PATHS}
+      QUARKUS_HTTP_CORS: ${QUARKUS_HTTP_CORS}
+      QUARKUS_HTTP_CORS_ORIGINS: ${QUARKUS_HTTP_CORS_ORIGINS}
+      QUARKUS_HTTP_CORS_METHODS: ${QUARKUS_HTTP_CORS_METHODS}
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-python
+    restart: always
+    environment:
+      POSTGRES_DB: cinema
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d cinema -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  business-api:
+    build:
+      context: ../Backend/python
+      dockerfile: Dockerfile
+    container_name: flask-cinema
+    environment:
+      # SQLAlchemy / psycopg URL (adjust if using async)
+      DATABASE_URL: postgresql+psycopg://app:app@postgres-db:5432/cinema
+      CORS_ORIGINS: http://localhost:5173
+      FLASK_RUN_PORT: "5000"
+      FLASK_ENV: production
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_HOST: postgres-db
+      DB_PORT: "5432"
+      DB_NAME: cinema
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "python - << 'PY'\nimport urllib.request, sys\ntry:\n    urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)\n    sys.exit(0)\nexcept Exception:\n    sys.exit(1)\nPY"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  frontend:
+    build:
+      context: ../Frontend/frontend
+      dockerfile: Dockerfile.dev
+    container_name: react-frontend
+    environment:
+      # Makes Vite listen on all IPs inside the container
+      HOST: 0.0.0.0
+      PORT: 5173
+    volumes:
+      - ../Frontend/frontend:/app
+    depends_on:
+      authentication:
+        condition: service_started
+      business-api:
+        condition: service_started
+    ports:
+      - "5173:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+volumes:
+  kc_data:
+  pg_data:

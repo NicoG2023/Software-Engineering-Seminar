@@ -60,6 +60,11 @@ from routes.movies import movies_bp
 # Register blueprint CON PREFIJO /api
 app.register_blueprint(movies_bp, url_prefix='/api')
 
+# Después de db.init_app(app) y de registrar blueprints
+with app.app_context():
+    db.create_all()
+    print("✅ Database tables created/verified at startup")
+
 # ---------------------------
 # CLI Commands
 # ---------------------------
