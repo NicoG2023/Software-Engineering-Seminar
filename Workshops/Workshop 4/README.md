@@ -728,3 +728,80 @@ of the graph illustrates the impact of heavy concurrent writes on Keycloak.
 
 # 4. GitHub Actions Workflow
 
+This repository includes a CI workflow that validates both the Python backend formatting and the React frontend linting.
+
+## 4.1 Overview
+
+Workflow file: `.github/workflows/ci.yml`
+
+Jobs:
+- `python-black`: installs Black and checks formatting on `Backend/python`
+- `frontend-lint`: installs Node dependencies and runs ESLint on `frontend/frontend`
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  python-black:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install black
+      - run: black --check Backend/python
+
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: frontend/frontend
+        run: npm ci
+      - name: Run ESLint
+        working-directory: frontend/frontend
+        run: npm run lint
+```
+
+## 4.2 Local Verification
+
+Run the same checks locally before pushing:
+
+```bash
+# Python (Black)
+python -m pip install --upgrade pip
+python -m pip install black
+python -m black --check Backend/python
+
+# Frontend (ESLint)
+cd frontend/frontend
+npm ci
+npm run lint
+```
+
+Sample results captured during setup:
+
+```
+Black: Oh no! 💥 💔 💥
+17 files would be reformatted, 2 files would be left unchanged.
+
+ESLint: ✖ 12 problems (10 errors, 2 warnings)
+Most errors: Unexpected any in api/* (authApi.ts, userApi.ts)
+One warning: react-hooks/exhaustive-deps in CatalogPage (addressed in code)
+```
+
+Notes:
+- Run `black Backend/python` to apply formatting and pass the Black check.
+- Replace `any` with proper TypeScript types or generics to pass ESLint.
+

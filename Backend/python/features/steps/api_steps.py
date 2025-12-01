@@ -5,6 +5,7 @@ from behave import given, when, then
 
 # ========== HELPERS GENERALES ==========
 
+
 @given("the API is running")
 def step_api_running(context):
     # Asumimos que el servidor Flask ya está levantado.
@@ -41,14 +42,16 @@ def step_send_delete(context, path):
     context.response = response
 
 
-@then('the response status code should be {status:d}')
+@then("the response status code should be {status:d}")
 def step_check_status_code(context, status):
     resp = context.response
-    assert resp.status_code == status, \
-        f"Expected {status}, got {resp.status_code}, body={resp.text}"
+    assert (
+        resp.status_code == status
+    ), f"Expected {status}, got {resp.status_code}, body={resp.text}"
 
 
 # ========== COMPROBACIONES DE JSON (sin solapamientos) ==========
+
 
 @then('the JSON response should have field "{field}"')
 def step_json_has_field(context, field):
@@ -62,8 +65,7 @@ def step_json_field_value(context, field, value):
     """Verifica que el valor (como string) coincida."""
     data = context.response.json()
     assert field in data, f"Field '{field}' not in response JSON: {data}"
-    assert str(data[field]) == value, \
-        f"Expected {field}={value}, got {data[field]}"
+    assert str(data[field]) == value, f"Expected {field}={value}, got {data[field]}"
 
 
 @then('the JSON field "{field}" should be integer {value:d}')
@@ -71,11 +73,11 @@ def step_json_field_int_value(context, field, value):
     """Verifica que el valor entero coincida."""
     data = context.response.json()
     assert field in data, f"Field '{field}' not in response JSON: {data}"
-    assert int(data[field]) == value, \
-        f"Expected {field}={value}, got {data[field]}"
+    assert int(data[field]) == value, f"Expected {field}={value}, got {data[field]}"
 
 
 # ========== PASOS ESPECÍFICOS PARA REUTILIZAR IDs ==========
+
 
 @given("an existing theater room")
 def step_existing_room(context):
@@ -89,7 +91,9 @@ def step_existing_room(context):
         "location": "Second floor, BDD tests",
     }
     resp = requests.post(url, json=payload)
-    assert resp.status_code == 201, f"Cannot create room, got {resp.status_code} ({resp.text})"
+    assert (
+        resp.status_code == 201
+    ), f"Cannot create room, got {resp.status_code} ({resp.text})"
     data = resp.json()
     context.room_id = data["id"]
 
@@ -100,13 +104,11 @@ def step_existing_movie(context):
     Crea una película válida (no preloaded) y guarda su id en context.movie_id
     """
     url = context.base_url + "/movies"
-    payload = {
-        "title": "BDD Movie",
-        "genre": "Sci-Fi",
-        "duration": 120
-    }
+    payload = {"title": "BDD Movie", "genre": "Sci-Fi", "duration": 120}
     resp = requests.post(url, json=payload)
-    assert resp.status_code == 201, f"Cannot create movie, got {resp.status_code} ({resp.text})"
+    assert (
+        resp.status_code == 201
+    ), f"Cannot create movie, got {resp.status_code} ({resp.text})"
     data = resp.json()
     context.movie_id = data["id"]
 
@@ -128,14 +130,14 @@ def step_create_screening_with_existing_movie_and_room(context, date, time, pric
     context.response = resp
 
 
-@when('I soft delete the last created room')
+@when("I soft delete the last created room")
 def step_delete_last_room(context):
     url = context.base_url + f"/rooms/{context.room_id}"
     resp = requests.delete(url)
     context.response = resp
 
 
-@when('I update the last created movie with JSON:')
+@when("I update the last created movie with JSON:")
 def step_update_last_movie(context):
     payload = json.loads(context.text)
     url = context.base_url + f"/movies/{context.movie_id}"
@@ -143,7 +145,7 @@ def step_update_last_movie(context):
     context.response = resp
 
 
-@when('I delete the last created movie')
+@when("I delete the last created movie")
 def step_delete_last_movie(context):
     url = context.base_url + f"/movies/{context.movie_id}"
     resp = requests.delete(url)

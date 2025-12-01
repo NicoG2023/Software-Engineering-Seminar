@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, time
 from decimal import Decimal
 
-from app import app        # importa la app ya configurada
+from app import app  # importa la app ya configurada
 from database import db
 from models import User, Genre, Movie, TheaterRoom, Screening, Ticket
 

@@ -23,8 +23,9 @@ export default function CatalogPage() {
   const [regMovieId, setRegMovieId] = useState<number | ''>('');
   const [regRoomId, setRegRoomId] = useState<number | ''>('');
   const [regDate, setRegDate] = useState('');
-  const [regTime, setRegTime] = useState('19:00');
+  const [regTime, setRegTime] = useState('13:00');
   const timeSlots = ['10:00', '13:00', '16:00', '19:00', '21:00'];
+
 
   useEffect(() => {
     setLoading(true);
@@ -208,9 +209,28 @@ export default function CatalogPage() {
           </div>
           <div className="mt-3 flex gap-2">
             <button className="bg-[#FFDA63] text-[#1E1E1E] px-4 py-2 rounded-xl font-semibold" onClick={async () => {
-              if (!regMovieId || !regRoomId || !regDate || !regTime) return;
+              if (!regMovieId || !regRoomId || !regDate) return;
               try {
-                await screeningsApi.create({ movie_id: Number(regMovieId), room_id: Number(regRoomId), date: regDate, time: regTime });
+                const all = await screeningsApi.getAll();
+                const preferRooms = [Number(regRoomId), ...rooms.filter(r => r.id !== Number(regRoomId)).map(r => r.id)];
+                const preferTimes = [regTime, ...timeSlots.filter(t => t !== regTime)];
+                const norm = (t: string) => t.slice(0, 5);
+                let pickedRoom: number | null = null;
+                let pickedTime: string | null = null;
+                for (const rId of preferRooms) {
+                  const usedTimes = new Set(
+                    all
+                      .filter(s => s.room_id === rId && s.date === regDate)
+                      .map(s => norm(s.time))
+                  );
+                  const freeTime = preferTimes.find(t => !usedTimes.has(norm(t)));
+                  if (freeTime) { pickedRoom = rId; pickedTime = freeTime; break; }
+                }
+                if (!pickedRoom || !pickedTime) {
+                  window.alert('No free time slots for the selected date. Try another day.');
+                  return;
+                }
+                await screeningsApi.create({ movie_id: Number(regMovieId), room_id: pickedRoom, date: regDate, time: pickedTime });
                 const map: Record<number, Screening[]> = {};
                 await Promise.all(
                   movies.map(async (m) => {
@@ -223,6 +243,10 @@ export default function CatalogPage() {
                   })
                 );
                 setScreenings(map);
+                // focus calendar on the saved date
+                const d = new Date(regDate);
+                setCurrentMonth(d.getMonth());
+                setCurrentYear(d.getFullYear());
                 setRegisterOpen(false);
               } catch (e) {
                 console.error(e);
@@ -232,6 +256,7 @@ export default function CatalogPage() {
           </div>
         </div>
       )}
+
     </main>
   );
 }

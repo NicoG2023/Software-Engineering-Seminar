@@ -5,11 +5,7 @@ FROM python:3.12-slim
 # Environment variables
 # ---------------------------
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    POETRY_VERSION=1.8.3 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_CACHE_DIR=/tmp/poetry-cache
+    PYTHONUNBUFFERED=1
 
 # ---------------------------
 # System dependencies
@@ -25,19 +21,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ---------------------------
-# Install Poetry
+# Install Python dependencies using pip and pyproject.toml
+# (copy only dependency file first to leverage Docker cache)
 # ---------------------------
-RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
-
-# ---------------------------
-# Install Python dependencies with Poetry
-# (copy only dependency files first to leverage Docker cache)
-# ---------------------------
-COPY pyproject.toml poetry.lock* /app/
-
-# Install only main dependencies (no dev tools like behave)
-RUN poetry install --no-root --only main \
- && rm -rf "$POETRY_CACHE_DIR"
+COPY pyproject.toml /app/pyproject.toml
+RUN pip install --no-cache-dir .
 
 # ---------------------------
 # Copy application code

@@ -39,20 +39,25 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev_secret_key")
 # ---------------------------
 db.init_app(app)
 
+
 # ---------------------------
 # RUTAS BÁSICAS AGREGADAS
 # ---------------------------
-@app.route('/')
+@app.route("/")
 def home():
     return jsonify({"message": "Backend Flask funcionando!", "status": "OK"})
 
-@app.route('/health')
+
+@app.route("/health")
 def health():
-    return jsonify({
-        "status": "healthy", 
-        "service": "backend-flask",
-        "database_configured": bool(DB_HOST)
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": "backend-flask",
+            "database_configured": bool(DB_HOST),
+        }
+    )
+
 
 # ---------------------------
 # Import models and routes
@@ -62,36 +67,34 @@ from routes.movies import movies_bp
 from routes.screenings import screenings_bp
 
 # Register blueprint CON PREFIJO /api
-app.register_blueprint(movies_bp, url_prefix='/api')
-app.register_blueprint(theater_rooms_bp, url_prefix='/api')
-app.register_blueprint(screenings_bp, url_prefix='/api')
+app.register_blueprint(movies_bp, url_prefix="/api")
+app.register_blueprint(theater_rooms_bp, url_prefix="/api")
+app.register_blueprint(screenings_bp, url_prefix="/api")
 
 # Después de db.init_app(app) y de registrar blueprints
 with app.app_context():
     db.create_all()
     print("✅ Database tables created/verified at startup")
 
+
 # ---------------------------
 # CLI Commands
 # ---------------------------
-@app.cli.command('preload-movies')
+@app.cli.command("preload-movies")
 def preload_movies_command():
     """Preload movies from monthly report using OMDB API"""
     import os
     from scripts.preload_movies import preload_movies_from_json
-    
-    json_path = os.path.join(
-        os.path.dirname(__file__), 
-        'data', 
-        'monthly_movies.json'
-    )
-    
+
+    json_path = os.path.join(os.path.dirname(__file__), "data", "monthly_movies.json")
+
     if not os.path.exists(json_path):
         print(f"❌ Error: monthly_movies.json not found at {json_path}")
         return
-    
+
     preload_movies_from_json(app, json_path)
     print("✅ Preload completed!")
+
 
 # ---------------------------
 # Entry point

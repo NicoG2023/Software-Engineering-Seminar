@@ -101,7 +101,9 @@ def create_basic_movie_and_room(app, *, movie_deleted=False, room_active=True):
         return movie.id_movie, room.id_room
 
 
-def create_screening_in_db(app, movie_id, room_id, d, t, *, is_deleted=False, price=None, seats=None):
+def create_screening_in_db(
+    app, movie_id, room_id, d, t, *, is_deleted=False, price=None, seats=None
+):
     """
     Creates a Screening in the DB with the given parameters and returns its ID.
       - d: date object
@@ -128,6 +130,7 @@ def create_screening_in_db(app, movie_id, room_id, d, t, *, is_deleted=False, pr
 # =========================================================
 #          POST /api/screenings  (create_screening)
 # =========================================================
+
 
 def test_create_screening_success(client, app):
     """
@@ -272,7 +275,7 @@ def test_create_screening_invalid_movie_or_room_returns_400(client, app):
 
     payload = {
         "movie_id": 999,  # does not exist
-        "room_id": 999,   # does not exist
+        "room_id": 999,  # does not exist
         "date": future_date,
         "time": "19:30",
     }
@@ -289,7 +292,9 @@ def test_create_screening_movie_or_room_not_available_returns_400(client, app):
     400 'Movie or room not available'.
     """
     # Case 1: movie is_deleted=True
-    movie_id, room_id = create_basic_movie_and_room(app, movie_deleted=True, room_active=True)
+    movie_id, room_id = create_basic_movie_and_room(
+        app, movie_deleted=True, room_active=True
+    )
     future_date = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
 
     payload1 = {
@@ -303,7 +308,9 @@ def test_create_screening_movie_or_room_not_available_returns_400(client, app):
     assert resp1.get_json()["error"] == "Movie or room not available"
 
     # Case 2: room inactive
-    movie_id2, room_id2 = create_basic_movie_and_room(app, movie_deleted=False, room_active=False)
+    movie_id2, room_id2 = create_basic_movie_and_room(
+        app, movie_deleted=False, room_active=False
+    )
     payload2 = {
         "movie_id": movie_id2,
         "room_id": room_id2,
@@ -382,7 +389,9 @@ def test_create_screening_conflict_returns_400(client, app):
     time_20 = datetime.strptime("20:00", "%H:%M").time()
 
     # First screening already existing at that slot
-    create_screening_in_db(app, movie_id, room_id, future_date, time_20, is_deleted=False)
+    create_screening_in_db(
+        app, movie_id, room_id, future_date, time_20, is_deleted=False
+    )
 
     payload = {
         "movie_id": movie_id,
@@ -406,7 +415,9 @@ def test_create_screening_ignores_deleted_conflicts(client, app):
     time_20 = datetime.strptime("20:00", "%H:%M").time()
 
     # Screening at the same slot but soft-deleted
-    create_screening_in_db(app, movie_id, room_id, future_date, time_20, is_deleted=True)
+    create_screening_in_db(
+        app, movie_id, room_id, future_date, time_20, is_deleted=True
+    )
 
     payload = {
         "movie_id": movie_id,
@@ -422,6 +433,7 @@ def test_create_screening_ignores_deleted_conflicts(client, app):
 # =========================================================
 #        GET /api/screenings/<movie_id> (by movie)
 # =========================================================
+
 
 def test_get_screenings_by_movie_returns_only_non_deleted(client, app):
     """
@@ -484,6 +496,7 @@ def test_get_screenings_by_movie_returns_empty_list_when_none(client, app):
 #      GET /api/screenings/id/<id> (get_screening by ID)
 # =========================================================
 
+
 def test_get_single_screening_success(client, app):
     """
     Must return a non-deleted screening with all expected fields.
@@ -544,6 +557,7 @@ def test_get_single_screening_not_found_when_deleted_or_missing(client, app):
 #            PUT /api/screenings/<id> (update_screening)
 # =========================================================
 
+
 def test_update_screening_updates_fields_successfully(client, app):
     """
     Must allow updating:
@@ -569,7 +583,9 @@ def test_update_screening_updates_fields_successfully(client, app):
     with app.app_context():
         g2 = Genre(name="Drama")
         new_movie = Movie(title="Titanic", duration_minutes=180, genre=g2)
-        new_room = TheaterRoom(name="Room 2", capacity=120, location="2nd floor", is_active=True)
+        new_room = TheaterRoom(
+            name="Room 2", capacity=120, location="2nd floor", is_active=True
+        )
         db.session.add_all([g2, new_movie, new_room])
         db.session.commit()
         new_movie_id = new_movie.id_movie
@@ -670,16 +686,12 @@ def test_update_screening_invalid_date_or_time_format_returns_400(client, app):
     screening_id = create_screening_in_db(app, movie_id, room_id, future_date, t)
 
     # Invalid date
-    resp1 = client.put(
-        f"/api/screenings/{screening_id}", json={"date": "31-12-2025"}
-    )
+    resp1 = client.put(f"/api/screenings/{screening_id}", json={"date": "31-12-2025"})
     assert resp1.status_code == 400
     assert resp1.get_json()["error"] == "Invalid date format, expected YYYY-MM-DD"
 
     # Invalid time
-    resp2 = client.put(
-        f"/api/screenings/{screening_id}", json={"time": "8pm"}
-    )
+    resp2 = client.put(f"/api/screenings/{screening_id}", json={"time": "8pm"})
     assert resp2.status_code == 400
     assert resp2.get_json()["error"] == "Invalid time format, expected HH:MM"
 
@@ -694,9 +706,7 @@ def test_update_screening_to_past_date_returns_400(client, app):
     screening_id = create_screening_in_db(app, movie_id, room_id, future_date, t)
 
     past_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
-    resp = client.put(
-        f"/api/screenings/{screening_id}", json={"date": past_date}
-    )
+    resp = client.put(f"/api/screenings/{screening_id}", json={"date": past_date})
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "Cannot schedule screenings in the past"
 
@@ -723,16 +733,12 @@ def test_update_screening_price_and_clear_price(client, app):
     assert resp1.get_json()["error"] == "Invalid price"
 
     # Invalid price: NaN (non-finite)
-    resp2 = client.put(
-        f"/api/screenings/{screening_id}", json={"price": "NaN"}
-    )
+    resp2 = client.put(f"/api/screenings/{screening_id}", json={"price": "NaN"})
     assert resp2.status_code == 400
     assert resp2.get_json()["error"] == "Invalid price"
 
     # Valid price
-    resp3 = client.put(
-        f"/api/screenings/{screening_id}", json={"price": 20000.0}
-    )
+    resp3 = client.put(f"/api/screenings/{screening_id}", json={"price": 20000.0})
     assert resp3.status_code == 200
 
     with app.app_context():
@@ -740,9 +746,7 @@ def test_update_screening_price_and_clear_price(client, app):
         assert float(s2.price) == pytest.approx(20000.0)
 
     # price = None => clear price
-    resp4 = client.put(
-        f"/api/screenings/{screening_id}", json={"price": None}
-    )
+    resp4 = client.put(f"/api/screenings/{screening_id}", json={"price": None})
     assert resp4.status_code == 200
 
     with app.app_context():
@@ -758,12 +762,12 @@ def test_update_screening_invalid_available_seats_returns_400(client, app):
     movie_id, room_id = create_basic_movie_and_room(app)
     future_date = date.today() + timedelta(days=5)
     t = datetime.strptime("19:00", "%H:%M").time()
-    screening_id = create_screening_in_db(app, movie_id, room_id, future_date, t, seats=50)
+    screening_id = create_screening_in_db(
+        app, movie_id, room_id, future_date, t, seats=50
+    )
 
     # Negative seats
-    resp1 = client.put(
-        f"/api/screenings/{screening_id}", json={"available_seats": -1}
-    )
+    resp1 = client.put(f"/api/screenings/{screening_id}", json={"available_seats": -1})
     assert resp1.status_code == 400
     assert resp1.get_json()["error"] == "Invalid available_seats"
 
@@ -775,9 +779,7 @@ def test_update_screening_invalid_available_seats_returns_400(client, app):
     assert resp2.get_json()["error"] == "Invalid available_seats"
 
     # Valid seats
-    resp3 = client.put(
-        f"/api/screenings/{screening_id}", json={"available_seats": 75}
-    )
+    resp3 = client.put(f"/api/screenings/{screening_id}", json={"available_seats": 75})
     assert resp3.status_code == 200
 
     with app.app_context():
@@ -796,9 +798,13 @@ def test_update_screening_conflict_detection(client, app):
     t2 = datetime.strptime("19:00", "%H:%M").time()
 
     # Screening 1 (target slot)
-    s1_id = create_screening_in_db(app, movie_id, room_id, future_date, t1, is_deleted=False)
+    s1_id = create_screening_in_db(
+        app, movie_id, room_id, future_date, t1, is_deleted=False
+    )
     # Screening 2 that we will try to move into the same slot
-    s2_id = create_screening_in_db(app, movie_id, room_id, future_date, t2, is_deleted=False)
+    s2_id = create_screening_in_db(
+        app, movie_id, room_id, future_date, t2, is_deleted=False
+    )
 
     # Try to update s2 to have same room/date/time as s1
     resp = client.put(
@@ -831,7 +837,9 @@ def test_update_screening_not_found_returns_404(client, app):
     movie_id, room_id = create_basic_movie_and_room(app)
     future_date = date.today() + timedelta(days=4)
     t = datetime.strptime("17:00", "%H:%M").time()
-    s_id = create_screening_in_db(app, movie_id, room_id, future_date, t, is_deleted=True)
+    s_id = create_screening_in_db(
+        app, movie_id, room_id, future_date, t, is_deleted=True
+    )
 
     resp2 = client.put(f"/api/screenings/{s_id}", json={"time": "19:00"})
     assert resp2.status_code == 404
@@ -842,6 +850,7 @@ def test_update_screening_not_found_returns_404(client, app):
 #       DELETE /api/screenings/<id> (soft delete)
 # =========================================================
 
+
 def test_delete_screening_soft_delete_flag(client, app):
     """
     DELETE must set is_deleted=True and return 200.
@@ -850,7 +859,9 @@ def test_delete_screening_soft_delete_flag(client, app):
     future_date = date.today() + timedelta(days=4)
     t = datetime.strptime("17:00", "%H:%M").time()
 
-    screening_id = create_screening_in_db(app, movie_id, room_id, future_date, t, is_deleted=False)
+    screening_id = create_screening_in_db(
+        app, movie_id, room_id, future_date, t, is_deleted=False
+    )
 
     resp = client.delete(f"/api/screenings/{screening_id}")
     assert resp.status_code == 200
@@ -876,7 +887,9 @@ def test_delete_screening_returns_404_when_not_found_or_already_deleted(client, 
     movie_id, room_id = create_basic_movie_and_room(app)
     future_date = date.today() + timedelta(days=3)
     t = datetime.strptime("16:00", "%H:%M").time()
-    s_id = create_screening_in_db(app, movie_id, room_id, future_date, t, is_deleted=True)
+    s_id = create_screening_in_db(
+        app, movie_id, room_id, future_date, t, is_deleted=True
+    )
 
     resp2 = client.delete(f"/api/screenings/{s_id}")
     assert resp2.status_code == 404
@@ -886,6 +899,7 @@ def test_delete_screening_returns_404_when_not_found_or_already_deleted(client, 
 # =========================================================
 #       GET /api/screenings-all (get_all_screenings)
 # =========================================================
+
 
 def test_get_all_screenings_returns_all_non_deleted_with_movie_and_room(client, app):
     """
@@ -905,11 +919,25 @@ def test_get_all_screenings_returns_all_non_deleted_with_movie_and_room(client, 
 
     # s1 not deleted
     create_screening_in_db(
-        app, movie_id, room_id, future_date1, t1, is_deleted=False, price=15000.0, seats=90
+        app,
+        movie_id,
+        room_id,
+        future_date1,
+        t1,
+        is_deleted=False,
+        price=15000.0,
+        seats=90,
     )
     # s2 deleted
     create_screening_in_db(
-        app, movie_id, room_id, future_date2, t2, is_deleted=True, price=20000.0, seats=80
+        app,
+        movie_id,
+        room_id,
+        future_date2,
+        t2,
+        is_deleted=True,
+        price=20000.0,
+        seats=80,
     )
 
     resp = client.get("/api/screenings-all")

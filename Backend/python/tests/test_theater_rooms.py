@@ -46,6 +46,7 @@ def client(app):
 #                POST /api/rooms
 # =========================================================
 
+
 def test_create_room_success(client, app):
     """
     Debe crear una sala correctamente cuando se envían todos los campos requeridos.
@@ -54,11 +55,7 @@ def test_create_room_success(client, app):
       - is_active es True por defecto
       - se persiste en la BD con los valores correctos.
     """
-    payload = {
-        "name": "Room A",
-        "capacity": 80,
-        "location": "Main building, floor 1"
-    }
+    payload = {"name": "Room A", "capacity": 80, "location": "Main building, floor 1"}
 
     resp = client.post("/api/rooms", json=payload)
     assert resp.status_code == 201
@@ -107,28 +104,23 @@ def test_create_room_invalid_capacity_returns_400(client):
       - capacity no convertible a entero.
     """
     # capacity = 0
-    resp = client.post("/api/rooms", json={
-        "name": "Zero Capacity",
-        "capacity": 0
-    })
+    resp = client.post("/api/rooms", json={"name": "Zero Capacity", "capacity": 0})
     assert resp.status_code == 400
     data = resp.get_json()
     assert data["error"] == "Capacity must be a positive integer"
 
     # capacity negativo
-    resp2 = client.post("/api/rooms", json={
-        "name": "Negative Capacity",
-        "capacity": -10
-    })
+    resp2 = client.post(
+        "/api/rooms", json={"name": "Negative Capacity", "capacity": -10}
+    )
     assert resp2.status_code == 400
     data2 = resp2.get_json()
     assert data2["error"] == "Capacity must be a positive integer"
 
     # capacity no numérico
-    resp3 = client.post("/api/rooms", json={
-        "name": "Bad Capacity",
-        "capacity": "not-a-number"
-    })
+    resp3 = client.post(
+        "/api/rooms", json={"name": "Bad Capacity", "capacity": "not-a-number"}
+    )
     assert resp3.status_code == 400
     data3 = resp3.get_json()
     assert data3["error"] == "Capacity must be a positive integer"
@@ -140,21 +132,13 @@ def test_create_room_location_optional_and_trimmed(client, app):
       - si se envía string vacío o solo espacios, se guarda como None.
       - verifica que el campo se trimea correctamente.
     """
-    payload = {
-        "name": "Room Trimmed",
-        "capacity": 50,
-        "location": "  Second floor  "
-    }
+    payload = {"name": "Room Trimmed", "capacity": 50, "location": "  Second floor  "}
     resp = client.post("/api/rooms", json=payload)
     assert resp.status_code == 201
     data = resp.get_json()
     assert data["location"] == "Second floor"
 
-    payload2 = {
-        "name": "Room Without Location",
-        "capacity": 30,
-        "location": "   "
-    }
+    payload2 = {"name": "Room Without Location", "capacity": 30, "location": "   "}
     resp2 = client.post("/api/rooms", json=payload2)
     assert resp2.status_code == 201
     data2 = resp2.get_json()
@@ -170,6 +154,7 @@ def test_create_room_location_optional_and_trimmed(client, app):
 # =========================================================
 #                GET /api/rooms (list)
 # =========================================================
+
 
 def test_list_rooms_only_active_by_default(client, app):
     """
@@ -230,6 +215,7 @@ def test_list_rooms_returns_empty_list_when_no_rooms(client):
 #                GET /api/rooms/<id>
 # =========================================================
 
+
 def test_get_room_returns_room_even_if_inactive(client, app):
     """
     GET /api/rooms/<id> debe devolver la sala tanto si está activa como inactiva.
@@ -265,13 +251,16 @@ def test_get_room_not_found_returns_404(client):
 #                PUT /api/rooms/<id>
 # =========================================================
 
+
 def test_update_room_updates_all_fields(client, app):
     """
     Debe permitir actualizar name, capacity, location e is_active
     cuando se envían en el body.
     """
     with app.app_context():
-        room = TheaterRoom(name="Original", capacity=50, location="Old loc", is_active=True)
+        room = TheaterRoom(
+            name="Original", capacity=50, location="Old loc", is_active=True
+        )
         db.session.add(room)
         db.session.commit()
         room_id = room.id_room
@@ -306,9 +295,7 @@ def test_update_room_partial_update_keeps_other_fields(client, app):
         db.session.commit()
         room_id = room.id_room
 
-    payload = {
-        "capacity": 90  # solo capacity
-    }
+    payload = {"capacity": 90}  # solo capacity
 
     resp = client.put(f"/api/rooms/{room_id}", json=payload)
     assert resp.status_code == 200
@@ -316,12 +303,14 @@ def test_update_room_partial_update_keeps_other_fields(client, app):
     with app.app_context():
         updated = db.session.get(TheaterRoom, room_id)
         assert updated.name == "Partial"  # sin cambios
-        assert updated.capacity == 90     # actualizado
+        assert updated.capacity == 90  # actualizado
         assert updated.location == "Loc"  # sin cambios
         assert updated.is_active is True  # sin cambios
 
 
-def test_update_room_invalid_capacity_returns_400_and_does_not_change_capacity(client, app):
+def test_update_room_invalid_capacity_returns_400_and_does_not_change_capacity(
+    client, app
+):
     """
     Si se pasa un capacity inválido (<=0 o no numérico), debe devolver 400
     y no cambiar la capacidad en BD.
@@ -370,10 +359,7 @@ def test_update_room_trims_name_and_location(client, app):
         db.session.commit()
         room_id = room.id_room
 
-    payload = {
-        "name": "   New Name   ",
-        "location": "   New Location   "
-    }
+    payload = {"name": "   New Name   ", "location": "   New Location   "}
 
     resp = client.put(f"/api/rooms/{room_id}", json=payload)
     assert resp.status_code == 200
@@ -396,6 +382,7 @@ def test_update_room_trims_name_and_location(client, app):
 #                DELETE /api/rooms/<id>
 # =========================================================
 
+
 def test_delete_room_soft_deletes_room(client, app):
     """
     DELETE /api/rooms/<id> debe hacer un soft delete:
@@ -403,7 +390,9 @@ def test_delete_room_soft_deletes_room(client, app):
       - devuelve 200 y mensaje correcto.
     """
     with app.app_context():
-        room = TheaterRoom(name="To Deactivate", capacity=40, location=None, is_active=True)
+        room = TheaterRoom(
+            name="To Deactivate", capacity=40, location=None, is_active=True
+        )
         db.session.add(room)
         db.session.commit()
         room_id = room.id_room
@@ -430,7 +419,9 @@ def test_delete_room_returns_404_when_not_found_or_already_inactive(client, app)
 
     # Caso 2: ya inactiva
     with app.app_context():
-        room = TheaterRoom(name="Inactive Room", capacity=30, location=None, is_active=False)
+        room = TheaterRoom(
+            name="Inactive Room", capacity=30, location=None, is_active=False
+        )
         db.session.add(room)
         db.session.commit()
         room_id = room.id_room

@@ -527,30 +527,31 @@ def seed_month_screenings():
     month_days = (next_month_start - month_start).days
 
     created = 0
+    time_slots = ["10:00", "13:00", "16:00", "19:00", "21:00"]
     for day in range(1, month_days + 1):
         d = date(today.year, today.month, day)
         if d < today:
             continue
-        time_1900 = datetime.strptime("19:00", "%H:%M").time()
-
-        for m in movies:
-            # skip deleted/preloaded flags do not matter for screening
-            # conflict check
-            conflict = Screening.query.filter_by(
+        # schedule at most one movie per time slot
+        for idx, t in enumerate(time_slots):
+            if idx >= len(movies):
+                break
+            m = movies[idx]
+            slot_time = datetime.strptime(t, "%H:%M").time()
+            # conflict: any movie occupying same room/date/time
+            room_conflict = Screening.query.filter_by(
                 room_id=room.id_room,
                 date=d,
-                time=time_1900,
+                time=slot_time,
                 is_deleted=False,
-                movie_id=m.id_movie,
             ).first()
-            if conflict:
+            if room_conflict:
                 continue
-
             new_s = Screening(
                 movie_id=m.id_movie,
                 room_id=room.id_room,
                 date=d,
-                time=time_1900,
+                time=slot_time,
                 price=None,
                 available_seats=room.capacity,
             )

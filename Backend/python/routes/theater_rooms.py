@@ -2,12 +2,13 @@ from flask import Blueprint, jsonify, request
 from database import db
 from models import TheaterRoom
 
-theater_rooms_bp = Blueprint('theater_rooms', __name__)
+theater_rooms_bp = Blueprint("theater_rooms", __name__)
+
 
 # -------------------------------
 # Create a new theater room
 # -------------------------------
-@theater_rooms_bp.route('/rooms', methods=['POST'])
+@theater_rooms_bp.route("/rooms", methods=["POST"])
 def create_room():
     """
     Create a new theater room.
@@ -55,9 +56,9 @@ def create_room():
     """
     data = request.get_json() or {}
 
-    name = (data.get('name') or '').strip()
-    capacity = data.get('capacity')
-    location = (data.get('location') or '').strip() or None
+    name = (data.get("name") or "").strip()
+    capacity = data.get("capacity")
+    location = (data.get("location") or "").strip() or None
 
     if not name or capacity is None:
         return jsonify({"error": "Missing required fields"}), 400
@@ -70,27 +71,29 @@ def create_room():
         return jsonify({"error": "Capacity must be a positive integer"}), 400
 
     room = TheaterRoom(
-        name=name,
-        capacity=capacity_int,
-        location=location,
-        is_active=True
+        name=name, capacity=capacity_int, location=location, is_active=True
     )
     db.session.add(room)
     db.session.commit()
 
-    return jsonify({
-        "id": room.id_room,
-        "name": room.name,
-        "capacity": room.capacity,
-        "location": room.location,
-        "is_active": room.is_active
-    }), 201
+    return (
+        jsonify(
+            {
+                "id": room.id_room,
+                "name": room.name,
+                "capacity": room.capacity,
+                "location": room.location,
+                "is_active": room.is_active,
+            }
+        ),
+        201,
+    )
 
 
 # -------------------------------
 # List theater rooms
 # -------------------------------
-@theater_rooms_bp.route('/rooms', methods=['GET'])
+@theater_rooms_bp.route("/rooms", methods=["GET"])
 def list_rooms():
     """
     List theater rooms.
@@ -126,8 +129,8 @@ def list_rooms():
       Returns the list of theater rooms. By default only active rooms are returned.
       If `include_inactive=true` is provided, inactive rooms are included as well.
     """
-    include_inactive_raw = request.args.get('include_inactive', 'false').lower()
-    include_inactive = include_inactive_raw in ('true', '1', 'yes')
+    include_inactive_raw = request.args.get("include_inactive", "false").lower()
+    include_inactive = include_inactive_raw in ("true", "1", "yes")
 
     query = TheaterRoom.query
     if not include_inactive:
@@ -135,22 +138,27 @@ def list_rooms():
 
     rooms = query.all()
 
-    return jsonify([
-        {
-            "id": r.id_room,
-            "name": r.name,
-            "capacity": r.capacity,
-            "location": r.location,
-            "is_active": r.is_active
-        }
-        for r in rooms
-    ]), 200
+    return (
+        jsonify(
+            [
+                {
+                    "id": r.id_room,
+                    "name": r.name,
+                    "capacity": r.capacity,
+                    "location": r.location,
+                    "is_active": r.is_active,
+                }
+                for r in rooms
+            ]
+        ),
+        200,
+    )
 
 
 # -------------------------------
 # Get a single theater room by ID
 # -------------------------------
-@theater_rooms_bp.route('/rooms/<int:id>', methods=['GET'])
+@theater_rooms_bp.route("/rooms/<int:id>", methods=["GET"])
 def get_room(id):
     """
     Get a single theater room by its ID.
@@ -185,19 +193,24 @@ def get_room(id):
     if not room:
         return jsonify({"error": "Room not found"}), 404
 
-    return jsonify({
-        "id": room.id_room,
-        "name": room.name,
-        "capacity": room.capacity,
-        "location": room.location,
-        "is_active": room.is_active
-    }), 200
+    return (
+        jsonify(
+            {
+                "id": room.id_room,
+                "name": room.name,
+                "capacity": room.capacity,
+                "location": room.location,
+                "is_active": room.is_active,
+            }
+        ),
+        200,
+    )
 
 
 # -------------------------------
 # Update a theater room
 # -------------------------------
-@theater_rooms_bp.route('/rooms/<int:id>', methods=['PUT'])
+@theater_rooms_bp.route("/rooms/<int:id>", methods=["PUT"])
 def update_room(id):
     """
     Update a theater room.
@@ -251,14 +264,14 @@ def update_room(id):
     data = request.get_json() or {}
 
     # Name
-    if 'name' in data:
-      name = (data.get('name') or '').strip()
-      if name:
-          room.name = name
+    if "name" in data:
+        name = (data.get("name") or "").strip()
+        if name:
+            room.name = name
 
     # Capacity
-    if 'capacity' in data:
-        raw_cap = data.get('capacity')
+    if "capacity" in data:
+        raw_cap = data.get("capacity")
         try:
             cap_int = int(raw_cap)
             if cap_int <= 0:
@@ -268,13 +281,13 @@ def update_room(id):
         room.capacity = cap_int
 
     # Location
-    if 'location' in data:
-        loc = (data.get('location') or '').strip()
+    if "location" in data:
+        loc = (data.get("location") or "").strip()
         room.location = loc or None
 
     # is_active
-    if 'is_active' in data:
-        room.is_active = bool(data.get('is_active'))
+    if "is_active" in data:
+        room.is_active = bool(data.get("is_active"))
 
     db.session.commit()
     return jsonify({"message": "Room updated successfully"}), 200
@@ -283,7 +296,7 @@ def update_room(id):
 # -------------------------------
 # Soft delete / deactivate a theater room
 # -------------------------------
-@theater_rooms_bp.route('/rooms/<int:id>', methods=['DELETE'])
+@theater_rooms_bp.route("/rooms/<int:id>", methods=["DELETE"])
 def delete_room(id):
     """
     Deactivate (soft delete) a theater room.
