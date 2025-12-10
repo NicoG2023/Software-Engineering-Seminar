@@ -1,7 +1,6 @@
 services:
   mysql-db:
     image: mysql:8.0
-    container_name: mysql-java
     restart: always
     environment:
       MYSQL_DATABASE: keycloak
@@ -50,7 +49,7 @@ services:
 
   authentication:
     build: ../Backend/Java/authentication
-    container_name: quarkus-auth
+    # sin container_name, se llamará algo tipo proyecto-authentication
     environment:
       QUARKUS_OIDC_AUTH_SERVER_URL: ${QUARKUS_OIDC_AUTH_SERVER_URL}
       QUARKUS_OIDC_CLIENT_ID: ${QUARKUS_OIDC_CLIENT_ID}
@@ -74,7 +73,6 @@ services:
 
   postgres-db:
     image: postgres:16-alpine
-    container_name: postgres-python
     restart: always
     environment:
       POSTGRES_DB: cinema
@@ -94,9 +92,8 @@ services:
     build:
       context: ../Backend/python
       dockerfile: Dockerfile
-    container_name: flask-cinema
+    # sin container_name: el hostname interno será "business-api"
     environment:
-      # URL SQLAlchemy / psycopg (ajustar si se usa async)
       DATABASE_URL: postgresql+psycopg://app:app@postgres-db:5432/cinema
       CORS_ORIGINS: http://localhost:5173
       FLASK_RUN_PORT: "5000"
@@ -121,9 +118,8 @@ services:
     build:
       context: ../Frontend/frontend
       dockerfile: Dockerfile.dev
-    container_name: react-frontend
+    # sin container_name
     environment:
-      # Hace que Vite escuche en todas las IPs dentro del contenedor
       HOST: 0.0.0.0
       PORT: 5173
     volumes:
