@@ -24,8 +24,17 @@ WORKDIR /app
 # Install Python dependencies using pip and pyproject.toml
 # (copy only dependency file first to leverage Docker cache)
 # ---------------------------
-COPY pyproject.toml /app/pyproject.toml
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
+
+# ---------------------------
+# Install Python dependencies with Poetry
+# (copy only dependency files first to leverage Docker cache)
+# ---------------------------
+COPY pyproject.toml poetry.lock* /app/
+
+RUN poetry lock --no-update \
+ && poetry install --no-root \
+ && rm -rf "$POETRY_CACHE_DIR"
 
 # ---------------------------
 # Copy application code
@@ -40,5 +49,4 @@ EXPOSE 5000
 # ---------------------------
 # Default command
 # ---------------------------
-# Uses gunicorn, pointing to the 'app' object in main module 'app.py'
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
