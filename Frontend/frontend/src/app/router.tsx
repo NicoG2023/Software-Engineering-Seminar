@@ -13,6 +13,8 @@ import RoomList from '../pages/Admin/theaterRooms/RoomList';
 import RoomForm from '../pages/Admin/theaterRooms/RoomForm';
 import ScreeningList from '../pages/Admin/screenings/ScreeningList';
 import ScreeningForm from '../pages/Admin/screenings/ScreeningForm';
+import LoginPage from '../pages/Auth/LoginPage';
+import RegisterPage from '../pages/Auth/RegisterPage';
 
 const router = createBrowserRouter([
   {
@@ -23,10 +25,18 @@ const router = createBrowserRouter([
       { index: true, element: <RoleBasedLanding /> },
 
       {
+        path: 'login',
+        element: <LoginPage />,
+      },
+      {
+        path: 'register',
+        element: <RegisterPage />,
+      },
+      {
         path: 'admin',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <AdminPage />
             </RequireRole>
           </RequireAuth>
@@ -37,7 +47,7 @@ const router = createBrowserRouter([
         path: 'users-management',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <UsersManagementPage />
             </RequireRole>
           </RequireAuth>
@@ -51,7 +61,7 @@ const router = createBrowserRouter([
         path: 'movies',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <MovieList />
             </RequireRole>
           </RequireAuth>
@@ -61,7 +71,7 @@ const router = createBrowserRouter([
         path: 'movies/:id',
         element: (
           <RequireAuth>
-            <RequireRole role="Customer">
+            <RequireRole role="CUSTOMER">
               <MovieDetail />
             </RequireRole>
           </RequireAuth>
@@ -71,7 +81,7 @@ const router = createBrowserRouter([
         path: 'movies/new',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <MovieForm />
             </RequireRole>
           </RequireAuth>
@@ -81,7 +91,7 @@ const router = createBrowserRouter([
         path: 'movies/edit/:id',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <MovieForm />
             </RequireRole>
           </RequireAuth>
@@ -95,7 +105,7 @@ const router = createBrowserRouter([
         path: 'rooms',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <RoomList />
             </RequireRole>
           </RequireAuth>
@@ -105,7 +115,7 @@ const router = createBrowserRouter([
         path: 'rooms/new',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <RoomForm />
             </RequireRole>
           </RequireAuth>
@@ -115,7 +125,7 @@ const router = createBrowserRouter([
         path: 'rooms/edit/:id',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <RoomForm />
             </RequireRole>
           </RequireAuth>
@@ -129,7 +139,7 @@ const router = createBrowserRouter([
         path: 'screenings',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <ScreeningList />
             </RequireRole>
           </RequireAuth>
@@ -139,7 +149,7 @@ const router = createBrowserRouter([
         path: 'screenings/new',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <ScreeningForm />
             </RequireRole>
           </RequireAuth>
@@ -149,7 +159,7 @@ const router = createBrowserRouter([
         path: 'screenings/edit/:id',
         element: (
           <RequireAuth>
-            <RequireRole role="admin">
+            <RequireRole role="ADMIN">
               <ScreeningForm />
             </RequireRole>
           </RequireAuth>

@@ -1,118 +1,135 @@
-/* eslint-disable react-refresh/only-export-components */
-
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { keycloak, initKeycloak } from './keycloak';
-
-interface KeycloakTokenParsed {
-  preferred_username?: string;
-  resource_access?: Record<string, { roles: string[] }>;
-  realm_access?: { roles: string[] }
-}
+// src/auth/AuthContext.tsx
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { jwtDecode } from 'jwt-decode';
+import { authHttp } from '../api/http';
+import type { AuthResponse, UserResponse } from '../types/auth';
 
 type Session = {
   ready: boolean;
   authenticated: boolean;
-  token?: string | null;
-  username?: string | null;
-  hasClientRole: (role: string, clientId?: string) => boolean;
-  hasRealmRole: (role: string) => boolean;
-  login: () => void;
+  token: string | null;
+  username: string | null;
+  roles: string[];
+  user: UserResponse | null;
+  hasRole: (role: string) => boolean;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
+type DecodedToken = {
+  sub?: string;
+  preferred_username?: string;
+  groups?: string[];
+  exp?: number;
+};
+
 const AuthContext = createContext<Session | null>(null);
+const STORAGE_KEY = 'authToken';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [user, setUser] = useState<UserResponse | null>(null);
 
   const booted = useRef(false);
-  const intervalId = useRef<number | undefined>(undefined);
+
+  const resetState = () => {
+    setToken(null);
+    setAuthenticated(false);
+    setUsername(null);
+    setRoles([]);
+    setUser(null);
+  };
+
+  const applyToken = (newToken: string | null) => {
+    if (!newToken) {
+      localStorage.removeItem(STORAGE_KEY);
+      resetState();
+      return;
+    }
+
+    localStorage.setItem(STORAGE_KEY, newToken);
+    setToken(newToken);
+
+    try {
+      const decoded = jwtDecode<DecodedToken>(newToken);
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      if (decoded.exp && decoded.exp < nowSeconds) {
+        // token expired
+        localStorage.removeItem(STORAGE_KEY);
+        resetState();
+        return;
+      }
+
+      const uname = decoded.preferred_username ?? decoded.sub ?? null;
+      const groups = decoded.groups ?? [];
+
+      setAuthenticated(true);
+      setUsername(uname);
+      setRoles(groups);
+    } catch (e) {
+      console.error('Failed to decode JWT', e);
+      localStorage.removeItem(STORAGE_KEY);
+      resetState();
+    }
+  };
 
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        await initKeycloak();
-        if (cancelled) return;
-
-        setAuthenticated(!!keycloak.authenticated);
-        setReady(true);
-
-        const params = new URLSearchParams(window.location.search);
-        const authParams = ['code', 'state', 'session_state'] as const;
-        let mutated = false;
-
-        authParams.forEach((param) => {
-          if (params.has(param)) {
-            params.delete(param);
-            mutated = true;
-          }
-        });
-
-        if (mutated) {
-          const query = params.toString();
-          const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
-          window.history.replaceState(null, document.title, nextUrl);
-        }
-
-        intervalId.current = window.setInterval(() => {
-          if (keycloak.authenticated) {
-            keycloak.updateToken(60).catch(() => keycloak.login());
-          }
-        }, 30_000);
-
-        keycloak.onAuthSuccess = () => setAuthenticated(true);
-        keycloak.onAuthError = () => setAuthenticated(false);
-        keycloak.onAuthLogout = () => setAuthenticated(false);
-        keycloak.onTokenExpired = () => {
-          if (keycloak.authenticated) {
-            keycloak.updateToken(60).catch(() => keycloak.login());
-          }
-        };
-      } catch (err) {
-        console.error('Keycloak init failed', err);
-        if (!cancelled) {
-          setAuthenticated(false);
-          setReady(true);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (intervalId.current) window.clearInterval(intervalId.current);
-      keycloak.onAuthSuccess = undefined;
-      keycloak.onAuthError = undefined;
-      keycloak.onAuthLogout = undefined;
-      keycloak.onTokenExpired = undefined;
-      booted.current = false;
-    };
+    const storedToken = localStorage.getItem(STORAGE_KEY);
+    if (storedToken) {
+      applyToken(storedToken);
+      // opcional: también podrías hacer un GET /auth/me para refrescar user
+    }
+    setReady(true);
   }, []);
 
-  const value = useMemo<Session>(() => {
-    const tp = keycloak.tokenParsed as KeycloakTokenParsed | undefined;
-    return {
+  const login = async (uname: string, password: string) => {
+    const res = await authHttp.post<AuthResponse>('/auth/login', {
+      username: uname,
+      password,
+    });
+    const accessToken = res.data.accessToken;
+    applyToken(accessToken);
+    setUser(res.data.user ?? null);
+  };
+
+  const logout = () => {
+    applyToken(null);
+  };
+
+  const hasRole = (role: string): boolean => {
+    if (!role) return false;
+    const want = role.toUpperCase();
+    return roles.some(r => r.toUpperCase() === want);
+  };
+
+  const value = useMemo<Session>(
+    () => ({
       ready,
       authenticated,
-      token: keycloak.token ?? null,
-      username: tp?.preferred_username ?? null,
-      hasClientRole: (role: string, clientId = 'quarkus-api') => { // cspell:ignore quarkus
-        const roles: string[] = tp?.resource_access?.[clientId]?.roles ?? [];
-        return roles.includes(role);
-      },
-      hasRealmRole: (role: string) => {
-        const rr: string[] = tp?.realm_access?.roles ?? [];
-        return rr.includes(role);
-      },
-      login: () => keycloak.login(),
-      logout: () => keycloak.logout(),
-    };
-  }, [ready, authenticated]);
+      token,
+      username,
+      roles,
+      user,
+      hasRole,
+      login,
+      logout,
+    }),
+    [ready, authenticated, token, username, roles, user],
+  );
 
   return (
     <AuthContext.Provider value={value}>
@@ -121,7 +138,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Hook para usar el contexto
 export function useAuthStrict(): Session {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('AuthContext not mounted');

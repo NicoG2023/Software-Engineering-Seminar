@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStrict } from '../auth/AuthContext';
 
 export default function NavBar({ title = 'Cinema Management' }: { title?: string }) {
-  const { username, authenticated, login, logout, hasRealmRole } = useAuthStrict();
+  const { username, authenticated, hasRole, logout } = useAuthStrict();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -12,8 +12,8 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
   const isAdmin = useMemo(
-    () => authenticated && hasRealmRole('admin'),
-    [authenticated, hasRealmRole]
+    () => authenticated && hasRole('ADMIN'),
+    [authenticated, hasRole],
   );
 
   const initial = useMemo(() => {
@@ -49,6 +49,7 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
   }, [open]);
 
   const goManageUsers = () => navigate('/users-management');
+  const goLogin = () => navigate('/login');
 
   // detectar rutas activas
   const isMoviesRoute = location.pathname.startsWith('/movies');
@@ -118,7 +119,7 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
             {/* Login / user menu */}
             {!authenticated ? (
               <button
-                onClick={login}
+                onClick={goLogin}
                 className="rounded-xl bg-[#FFDA63] px-4 py-2 text-sm font-semibold text-[#333333] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#FFDA63]/60"
               >
                 Login
@@ -127,7 +128,7 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
               <div className="relative">
                 <button
                   ref={buttonRef}
-                  onClick={() => setOpen((v) => !v)}
+                  onClick={() => setOpen(v => !v)}
                   className="flex items-center gap-3 rounded-full bg-[#333333] pl-2 pr-3 py-1 text-white"
                 >
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFDA63] text-[#333333] text-sm font-bold">

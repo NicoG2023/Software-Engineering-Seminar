@@ -1,8 +1,18 @@
-export type KcUser = {
-  id: string;
+// src/types/auth.ts
+export type UserRole = 'ADMIN' | 'CUSTOMER';
+
+export type UserResponse = {
+  id: number;
   username: string;
-  email?: string;
+  email: string;
+  role: UserRole;
   enabled: boolean;
-  // El backend getUser() adjunta esto; en listUsers puede no venir.
-  realmRoles?: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuthResponse = {
+  accessToken: string;
+  tokenType: string;
+  user: UserResponse;
 };

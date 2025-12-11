@@ -1,12 +1,10 @@
-// src/router/RoleBasedLanding.tsx
 import { Navigate } from 'react-router-dom';
 import CatalogPage from '../../pages/Catalog/CatalogPage';
 import { useAuthStrict } from '../../auth/AuthContext';
 
 export default function RoleBasedLanding() {
-  const { ready, authenticated, hasRealmRole } = useAuthStrict();
+  const { ready, authenticated, hasRole } = useAuthStrict();
 
-  // Mientras inicializa Keycloak
   if (!ready) {
     return (
       <main className="min-h-screen bg-[#1E1E1E] flex items-center justify-center">
@@ -23,12 +21,12 @@ export default function RoleBasedLanding() {
     return <CatalogPage />;
   }
 
-  // Autenticado → decidir por rol en el realm
-  if (hasRealmRole('admin')) {
+  // Autenticado - decidir por rol
+  if (hasRole('ADMIN')) {
     return <Navigate to="/users-management" replace />;
   }
 
-  if (hasRealmRole('customer')) {
+  if (hasRole('CUSTOMER')) {
     return <CatalogPage />;
   }
 

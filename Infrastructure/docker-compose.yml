@@ -3,73 +3,43 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_DATABASE: keycloak
-      MYSQL_USER: keycloak
-      MYSQL_PASSWORD: keycloak
+      MYSQL_DATABASE: authdb
+      MYSQL_USER: authuser
+      MYSQL_PASSWORD: authpass
       MYSQL_ROOT_PASSWORD: root
     command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - kc_data:/var/lib/mysql
+      - auth_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak", "-pkeycloak"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "authuser", "-pauthpass"]
       interval: 10s
       timeout: 5s
       retries: 20
     ports:
       - "3306:3306"
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    command:
-      - start-dev
-      - --import-realm
+  authentication:
+    build: ../Backend/Java/authentication
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://mysql-db:3306/keycloak?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
-      KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
-      KC_HEALTH_ENABLED: "true"
-    volumes:
-      - ./keycloak/realms:/opt/keycloak/data/import
-      - ../Frontend/themes:/opt/keycloak/themes
+      QUARKUS_HTTP_PORT: "8080"
+      QUARKUS_HTTP_CORS: "true"
+      QUARKUS_HTTP_CORS_ORIGINS: "http://localhost:5173"
+      QUARKUS_HTTP_CORS_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      QUARKUS_HTTP_CORS_HEADERS: "accept,authorization,content-type,x-requested-with"
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:mysql://mysql-db:3306/authdb
+      QUARKUS_DATASOURCE_USERNAME: authuser
+      QUARKUS_DATASOURCE_PASSWORD: authpass
+      QUARKUS_DB_GENERATION: update
+      JWT_ISSUER: "cinema-auth"
+      JWT_PUBLIC_KEY_LOCATION: "publicKey.pem"
+      JWT_PRIVATE_KEY_LOCATION: "privateKey.pem"
+      QUARKUS_LOG_LEVEL: "INFO"
     depends_on:
       mysql-db:
         condition: service_healthy
     ports:
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-
-  authentication:
-    build: ../Backend/Java/authentication
-    # sin container_name, se llamará algo tipo proyecto-authentication
-    environment:
-      QUARKUS_OIDC_AUTH_SERVER_URL: ${QUARKUS_OIDC_AUTH_SERVER_URL}
-      QUARKUS_OIDC_CLIENT_ID: ${QUARKUS_OIDC_CLIENT_ID}
-      QUARKUS_OIDC_APP_TYPE: ${QUARKUS_OIDC_APP_TYPE}
-      QUARKUS_OIDC_AUDIENCE: ${QUARKUS_OIDC_AUDIENCE}
-      QUARKUS_OIDC_ROLES_SOURCE: ${QUARKUS_OIDC_ROLES_SOURCE}
-      QUARKUS_OIDC_ROLE_PATH: ${QUARKUS_OIDC_ROLE_PATH}
-      ADMIN_URL: ${ADMIN_URL}
-      REALM: ${REALM}
-      CLIENT_ID: ${CLIENT_ID}
-      CLIENT_SECRET: ${CLIENT_SECRET}
-      QUARKUS_PUBLIC_PATHS: ${QUARKUS_PUBLIC_PATHS}
-      QUARKUS_HTTP_CORS: ${QUARKUS_HTTP_CORS}
-      QUARKUS_HTTP_CORS_ORIGINS: ${QUARKUS_HTTP_CORS_ORIGINS}
-      QUARKUS_HTTP_CORS_METHODS: ${QUARKUS_HTTP_CORS_METHODS}
-    depends_on:
-      keycloak:
-        condition: service_healthy
-    ports:
       - "8081:8080"
+
 
   postgres-db:
     image: postgres:16-alpine
@@ -92,7 +62,6 @@ services:
     build:
       context: ../Backend/python
       dockerfile: Dockerfile
-    # sin container_name: el hostname interno será "business-api"
     environment:
       DATABASE_URL: postgresql+psycopg://app:app@postgres-db:5432/cinema
       CORS_ORIGINS: http://localhost:5173
@@ -118,7 +87,6 @@ services:
     build:
       context: ../Frontend/frontend
       dockerfile: Dockerfile.dev
-    # sin container_name
     environment:
       HOST: 0.0.0.0
       PORT: 5173
@@ -135,5 +103,5 @@ services:
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
 
 volumes:
-  kc_data:
+  auth_mysql_data:
   pg_data:

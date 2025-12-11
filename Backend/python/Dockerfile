@@ -21,10 +21,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ---------------------------
-# Install Python dependencies using pip and pyproject.toml
-# (copy only dependency file first to leverage Docker cache)
+# Poetry configuration
 # ---------------------------
-RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
+ARG POETRY_VERSION=1.8.4
+
+ENV POETRY_VERSION=${POETRY_VERSION} \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_CACHE_DIR=/tmp/poetry-cache
+
+# ---------------------------
+# Install Poetry
+# ---------------------------
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 
 # ---------------------------
 # Install Python dependencies with Poetry
