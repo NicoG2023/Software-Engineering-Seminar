@@ -67,13 +67,19 @@ jobs:
           java-version: "21"
 
       - name: Grant execution rights
-        run: chmod +x gradlew
+        run: |
+          cd Backend/Java/authentication
+          chmod +x gradlew
 
       - name: Build Quarkus project
-        run: ./gradlew build --no-daemon
+        run: |
+          cd Backend/Java/authentication
+          ./gradlew build --no-daemon
 
       - name: Run tests
-        run: ./gradlew test --no-daemon
+        run: |
+          cd Backend/Java/authentication  # Cambia al directorio correcto
+          ./gradlew test --no-daemon  # Ejecuta las pruebas
 
   ############################################
   # DEPLOY (Flask + Quarkus)
