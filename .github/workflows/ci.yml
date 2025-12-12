@@ -40,10 +40,14 @@ jobs:
           poetry install --no-root
 
       - name: Run Black check
-        run: poetry run black --check .
+        run: |
+          cd Backend/python
+          poetry run black --check .
 
       - name: Run tests
-        run: poetry run pytest tests/  # O el comando específico para tus pruebas
+        run: |
+            cd Backend/python
+            poetry run pytest tests
 
   ############################################
   # JAVA (Quarkus + Gradle)
