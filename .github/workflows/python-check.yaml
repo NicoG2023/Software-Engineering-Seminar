@@ -20,13 +20,22 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Python dependencies
+      - name: Install Poetry
         run: |
-          pip install .
-          pip install ".[dev]"
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies with Poetry
+        run: |
+          cd Backend/python
+          poetry install --no-root
 
       - name: Run Black check
-        run: black --check .
+        run: |
+          cd Backend/python
+          poetry run black --check .
 
       - name: Run tests
-        run: pytest tests/  # O el comando específico para tus pruebas
+        run: |
+          cd Backend/python
+          poetry run pytest tests/
