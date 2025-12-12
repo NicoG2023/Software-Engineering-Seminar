@@ -29,6 +29,11 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Update poetry.lock
+        run: |
+          cd Backend/python
+          poetry lock
+
       - name: Install Python dependencies with Poetry
         run: |
           cd Backend/python
