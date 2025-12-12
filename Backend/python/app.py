@@ -71,6 +71,7 @@ app.register_blueprint(movies_bp, url_prefix="/api")
 app.register_blueprint(theater_rooms_bp, url_prefix="/api")
 app.register_blueprint(screenings_bp, url_prefix="/api")
 
+
 # ---------------------------
 # CLI Commands
 # ---------------------------

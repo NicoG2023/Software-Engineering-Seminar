@@ -5,12 +5,13 @@ from models import Screening, Movie, TheaterRoom
 from datetime import datetime, date
 import math
 
-screenings_bp = Blueprint('screenings', __name__)
+screenings_bp = Blueprint("screenings", __name__)
+
 
 # -------------------------------
 # Create a new screening
 # -------------------------------
-@screenings_bp.route('/screenings', methods=['POST'])
+@screenings_bp.route("/screenings", methods=["POST"])
 def create_screening():
     """
     Create a new screening.
@@ -74,10 +75,10 @@ def create_screening():
     """
     data = request.get_json() or {}
 
-    movie_id = data.get('movie_id')
-    room_id = data.get('room_id')
-    date_str = data.get('date')
-    time_str = data.get('time')
+    movie_id = data.get("movie_id")
+    room_id = data.get("room_id")
+    date_str = data.get("date")
+    time_str = data.get("time")
 
     if not all([movie_id, room_id, date_str, time_str]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -110,10 +111,7 @@ def create_screening():
 
     # Comprobar conflictos en la misma sala/fecha/hora
     conflict = Screening.query.filter_by(
-        room_id=room.id_room,
-        date=screening_date,
-        time=screening_time,
-        is_deleted=False
+        room_id=room.id_room, date=screening_date, time=screening_time, is_deleted=False
     ).first()
 
     if conflict:
@@ -140,16 +138,21 @@ def create_screening():
     db.session.add(new_screening)
     db.session.commit()
 
-    return jsonify({
-        "message": "Screening created successfully",
-        "id": new_screening.id_screening
-    }), 201
+    return (
+        jsonify(
+            {
+                "message": "Screening created successfully",
+                "id": new_screening.id_screening,
+            }
+        ),
+        201,
+    )
 
 
 # -------------------------------
 # Get screenings by movie
 # -------------------------------
-@screenings_bp.route('/screenings/<int:movie_id>', methods=['GET'])
+@screenings_bp.route("/screenings/<int:movie_id>", methods=["GET"])
 def get_screenings_by_movie(movie_id):
     """
     Get screenings by movie.
@@ -181,29 +184,31 @@ def get_screenings_by_movie(movie_id):
       Returns all non-deleted screenings for the given movie (`is_deleted = False`),
       including basic information about date, time, room, price and available seats.
     """
-    screenings = Screening.query.filter_by(
-        movie_id=movie_id,
-        is_deleted=False
-    ).all()
+    screenings = Screening.query.filter_by(movie_id=movie_id, is_deleted=False).all()
 
-    return jsonify([
-        {
-            "id": s.id_screening,
-            "date": s.date.isoformat(),
-            "time": s.time.strftime("%H:%M"),
-            "room": s.room.name if s.room else None,
-            "room_id": s.room_id,
-            "price": float(s.price) if s.price is not None else None,
-            "available_seats": s.available_seats,
-        }
-        for s in screenings
-    ]), 200
+    return (
+        jsonify(
+            [
+                {
+                    "id": s.id_screening,
+                    "date": s.date.isoformat(),
+                    "time": s.time.strftime("%H:%M"),
+                    "room": s.room.name if s.room else None,
+                    "room_id": s.room_id,
+                    "price": float(s.price) if s.price is not None else None,
+                    "available_seats": s.available_seats,
+                }
+                for s in screenings
+            ]
+        ),
+        200,
+    )
 
 
 # -------------------------------
 # Get single screening by ID
 # -------------------------------
-@screenings_bp.route('/screenings/id/<int:id>', methods=['GET'])
+@screenings_bp.route("/screenings/id/<int:id>", methods=["GET"])
 def get_screening(id):
     """
     Get a single screening by its ID.
@@ -238,30 +243,34 @@ def get_screening(id):
       Returns a single non-deleted screening with all its core fields.
       Useful for edit forms in the admin UI.
     """
-    screening = Screening.query.filter_by(
-        id_screening=id,
-        is_deleted=False
-    ).first()
+    screening = Screening.query.filter_by(id_screening=id, is_deleted=False).first()
 
     if not screening:
         return jsonify({"error": "Screening not found"}), 404
 
-    return jsonify({
-        "id": screening.id_screening,
-        "movie_id": screening.movie_id,
-        "room_id": screening.room_id,
-        "date": screening.date.isoformat(),
-        "time": screening.time.strftime("%H:%M"),
-        "price": float(screening.price) if screening.price is not None else None,
-        "available_seats": screening.available_seats,
-        "room": screening.room.name if screening.room else None,
-    }), 200
+    return (
+        jsonify(
+            {
+                "id": screening.id_screening,
+                "movie_id": screening.movie_id,
+                "room_id": screening.room_id,
+                "date": screening.date.isoformat(),
+                "time": screening.time.strftime("%H:%M"),
+                "price": (
+                    float(screening.price) if screening.price is not None else None
+                ),
+                "available_seats": screening.available_seats,
+                "room": screening.room.name if screening.room else None,
+            }
+        ),
+        200,
+    )
 
 
 # -------------------------------
 # Update a screening
 # -------------------------------
-@screenings_bp.route('/screenings/<int:id>', methods=['PUT'])
+@screenings_bp.route("/screenings/<int:id>", methods=["PUT"])
 def update_screening(id):
     """
     Update a screening.
@@ -303,10 +312,7 @@ def update_screening(id):
         - checks for scheduling conflicts in the room/date/time,
         - allows updating price and available_seats.
     """
-    screening = Screening.query.filter_by(
-        id_screening=id,
-        is_deleted=False
-    ).first()
+    screening = Screening.query.filter_by(id_screening=id, is_deleted=False).first()
 
     if not screening:
         return jsonify({"error": "Screening not found"}), 404
@@ -314,7 +320,7 @@ def update_screening(id):
     data = request.get_json() or {}
 
     # Movie change (opcional)
-    movie_id = data.get('movie_id')
+    movie_id = data.get("movie_id")
     if movie_id is not None:
         movie = db.session.get(Movie, movie_id)
         if not movie or getattr(movie, "is_deleted", False):
@@ -322,7 +328,7 @@ def update_screening(id):
         screening.movie_id = movie.id_movie
 
     # Room change (opcional)
-    room_id = data.get('room_id')
+    room_id = data.get("room_id")
     if room_id is not None:
         room = db.session.get(TheaterRoom, room_id)
         if not room or not room.is_active:
@@ -332,7 +338,7 @@ def update_screening(id):
         # screening.available_seats = room.capacity
 
     # Date change (opcional)
-    date_str = data.get('date')
+    date_str = data.get("date")
     if date_str is not None:
         try:
             new_date = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -343,7 +349,7 @@ def update_screening(id):
         screening.date = new_date
 
     # Time change (opcional)
-    time_str = data.get('time')
+    time_str = data.get("time")
     if time_str is not None:
         try:
             new_time = datetime.strptime(time_str, "%H:%M").time()
@@ -352,24 +358,24 @@ def update_screening(id):
         screening.time = new_time
 
     # Price change (opcional)
-    if 'price' in data:
-      raw_price = data.get('price')
-      if raw_price is None:
-          screening.price = None
-      else:
-          try:
-              price_value = float(raw_price)
-          except (TypeError, ValueError):
-              return jsonify({"error": "Invalid price"}), 400
+    if "price" in data:
+        raw_price = data.get("price")
+        if raw_price is None:
+            screening.price = None
+        else:
+            try:
+                price_value = float(raw_price)
+            except (TypeError, ValueError):
+                return jsonify({"error": "Invalid price"}), 400
 
-          if not math.isfinite(price_value):
-              return jsonify({"error": "Invalid price"}), 400
+            if not math.isfinite(price_value):
+                return jsonify({"error": "Invalid price"}), 400
 
-          screening.price = price_value
+            screening.price = price_value
 
     # Available seats change (opcional)
-    if 'available_seats' in data:
-        raw_seats = data.get('available_seats')
+    if "available_seats" in data:
+        raw_seats = data.get("available_seats")
         try:
             seats_int = int(raw_seats)
             if seats_int < 0:
@@ -384,7 +390,7 @@ def update_screening(id):
         Screening.room_id == screening.room_id,
         Screening.date == screening.date,
         Screening.time == screening.time,
-        Screening.is_deleted == False  # noqa: E712
+        Screening.is_deleted == False,  # noqa: E712
     ).first()
 
     if conflict:
@@ -397,7 +403,7 @@ def update_screening(id):
 # -------------------------------
 # Soft delete a screening
 # -------------------------------
-@screenings_bp.route('/screenings/<int:id>', methods=['DELETE'])
+@screenings_bp.route("/screenings/<int:id>", methods=["DELETE"])
 def delete_screening(id):
     """
     Soft delete a screening.
@@ -432,10 +438,11 @@ def delete_screening(id):
     db.session.commit()
     return jsonify({"message": "Screening deleted (soft delete)"}), 200
 
+
 # -------------------------------
 # Get all screenings (admin use)
 # -------------------------------
-@screenings_bp.route('/screenings-all', methods=['GET'])
+@screenings_bp.route("/screenings-all", methods=["GET"])
 def get_all_screenings():
     """
     Get all non-deleted screenings.
@@ -478,17 +485,19 @@ def get_all_screenings():
 
     result = []
     for s in screenings:
-        result.append({
-            "id": s.id_screening,
-            "movie_id": s.movie_id,
-            "room_id": s.room_id,
-            "date": s.date.isoformat(),
-            "time": s.time.strftime("%H:%M"),
-            "price": float(s.price) if s.price is not None else None,
-            "available_seats": s.available_seats,
-            "room": s.room.name if s.room else None,
-            "movie": s.movie.title if s.movie else None,
-        })
+        result.append(
+            {
+                "id": s.id_screening,
+                "movie_id": s.movie_id,
+                "room_id": s.room_id,
+                "date": s.date.isoformat(),
+                "time": s.time.strftime("%H:%M"),
+                "price": float(s.price) if s.price is not None else None,
+                "available_seats": s.available_seats,
+                "room": s.room.name if s.room else None,
+                "movie": s.movie.title if s.movie else None,
+            }
+        )
 
     return jsonify(result), 200
 
@@ -496,7 +505,7 @@ def get_all_screenings():
 # -------------------------------
 # Seed sample screenings for current month
 # -------------------------------
-@screenings_bp.route('/screenings/seed-month', methods=['POST'])
+@screenings_bp.route("/screenings/seed-month", methods=["POST"])
 def seed_month_screenings():
     """
     Create sample screenings across the current month for existing movies.
@@ -507,7 +516,11 @@ def seed_month_screenings():
     - Skip days in the past and skip conflicts
     """
     # find an active room
-    room = TheaterRoom.query.filter_by(is_active=True).order_by(TheaterRoom.id_room.asc()).first()
+    room = (
+        TheaterRoom.query.filter_by(is_active=True)
+        .order_by(TheaterRoom.id_room.asc())
+        .first()
+    )
     if not room:
         return jsonify({"error": "No active rooms found"}), 400
 
