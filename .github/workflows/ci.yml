@@ -78,8 +78,8 @@ jobs:
 
       - name: Run tests
         run: |
-          cd Backend/Java/authentication  # Cambia al directorio correcto
-          ./gradlew test --no-daemon  # Ejecuta las pruebas
+          cd Backend/Java/authentication
+          ./gradlew test --no-daemon
 
   ############################################
   # DEPLOY (Flask + Quarkus)
@@ -93,15 +93,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Despliegue para Python (Flask)
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose  # Instalar docker-compose
+
       - name: Deploy Python Flask Microservice
         run: |
           cd Backend/python
-          docker-compose -f Infrastructure/docker-compose.yml up -d  # Ajusta según la ubicación de tu docker-compose.yml
+          docker-compose -f ../../Infrastructure/docker-compose.yml up -d
 
-      # Despliegue para Java (Quarkus)
       - name: Deploy Java Quarkus Microservice
         run: |
           cd Backend/Java/authentication
           ./gradlew build --no-daemon
-          docker-compose -f Infrastructure/docker-compose.yml up -d  # Ajusta según la ubicación de tu docker-compose.yml
+          docker-compose -f ../../../Infrastructure/docker-compose.yml up -d
