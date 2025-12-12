@@ -27,11 +27,12 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH  # Asegúrate de que Poetry esté en el PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install Python dependencies with Poetry
         run: |
-          poetry install --no-root  # Instala las dependencias sin instalar el propio proyecto (si no es necesario)
+          cd Backend/python
+          poetry install --no-root
 
       - name: Run Black check
         run: poetry run black --check .
