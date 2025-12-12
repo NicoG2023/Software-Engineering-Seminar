@@ -72,6 +72,7 @@ services:
       DB_HOST: postgres-db
       DB_PORT: "5432"
       DB_NAME: cinema
+      OMDB_API_KEY: "e9b72a04"
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -82,6 +83,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+    command: > 
+      sh -c "python -c \"from app import app; from database import db; app.app_context().push(); db.create_all(); print('DB ready')\" && gunicorn -b 0.0.0.0:5000 app:app"
+
+
+
 
   frontend:
     build:

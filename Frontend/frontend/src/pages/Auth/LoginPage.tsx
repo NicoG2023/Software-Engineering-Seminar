@@ -42,20 +42,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950">
-      <div className="w-full max-w-md px-6 py-8 bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800">
+    <div className="min-h-[calc(100vh-96px)] flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md px-6 py-8 bg-white rounded-2xl shadow-2xl border border-slate-200">
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-xl">
+            <div className="h-10 w-10 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold text-xl shadow-md">
               C
             </div>
-            <span className="text-2xl font-semibold tracking-wide text-slate-50">
+            <span className="text-2xl font-semibold tracking-wide text-slate-900">
               cinema
             </span>
           </div>
-          <h2 className="text-lg font-medium text-slate-300">
-            Sign in to your account
+          <h2 className="text-sm font-medium text-slate-600">
+            Sign in to your account to manage shows, tickets and rooms.
           </h2>
         </div>
 
@@ -65,7 +65,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-slate-200 mb-1"
+              className="block text-sm font-semibold text-slate-800 mb-1"
             >
               Username
             </label>
@@ -73,7 +73,7 @@ export default function LoginPage() {
               id="username"
               name="username"
               autoComplete="username"
-              className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
               value={username}
               onChange={e => setUsername(e.target.value)}
             />
@@ -83,7 +83,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-slate-200 mb-1"
+              className="block text-sm font-semibold text-slate-800 mb-1"
             >
               Password
             </label>
@@ -93,14 +93,14 @@ export default function LoginPage() {
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 pr-10 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
               <button
                 type="button"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-200"
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
                 onClick={() => setShowPassword(prev => !prev)}
               >
                 {showPassword ? (
@@ -142,7 +142,7 @@ export default function LoginPage() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {error}
             </div>
           )}
@@ -152,10 +152,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-red-500/30 hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-50"
             >
               {loading && (
-                <span className="h-4 w-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                <span className="h-4 w-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
               )}
               <span>Sign in</span>
             </button>
@@ -167,7 +167,7 @@ export default function LoginPage() {
           Don&apos;t have an account?{' '}
           <Link
             to="/register"
-            className="text-red-400 hover:text-red-300 font-medium"
+            className="text-indigo-600 hover:text-indigo-500 font-medium"
           >
             Create one
           </Link>

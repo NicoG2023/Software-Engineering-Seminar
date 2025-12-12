@@ -41,7 +41,6 @@ export const moviesApi = {
     return response.data;
   },
 
-  // 👇 nuevo
   getGenres: async (): Promise<Genre[]> => {
     const response = await http.get(`${API}/genres`);
     return response.data;

@@ -7,15 +7,15 @@ import { useAuthStrict } from '../../auth/AuthContext';
 const ROLE_ADMIN: UserRole = 'ADMIN';
 const ROLE_CUSTOMER: UserRole = 'CUSTOMER';
 
-// Badge styles per role
 const ROLE_BADGE = (role: UserRole) => {
   if (role === ROLE_ADMIN) {
-    return 'bg-[#D90429]/15 text-[#FFDA63] border-[#D90429]/40';
+    // Nuevo estilo más visible
+    return 'bg-red-100 text-red-700 border-red-300';
   }
   if (role === ROLE_CUSTOMER) {
-    return 'bg-blue-600/20 text-blue-300 border-blue-500/40';
+    return 'bg-blue-100 text-blue-700 border-blue-300';
   }
-  return 'bg-[#333333] text-white border-[#333333]';
+  return 'bg-gray-200 text-gray-700 border-gray-300';
 };
 
 export default function UsersManagementPage() {
@@ -83,52 +83,67 @@ export default function UsersManagementPage() {
     }
   };
 
-  return (
-    <div className="space-y-4">
+    return (
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Users Management</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Users Management
+        </h1>
         <button
           onClick={() => void fetchUsers()}
           disabled={loading}
-          className="rounded-lg px-4 py-2 font-medium text-[#1E1E1E] bg-[#FFDA63] hover:opacity-90 disabled:opacity-60"
+          className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-50"
         >
           {loading ? 'Loading…' : 'Refresh'}
         </button>
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <input
           value={q}
           onChange={e => setQ(e.target.value)}
           placeholder="Search by username or email…"
-          className="w-full md:w-96 rounded-lg border border-[#333333] bg-[#1E1E1E] px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FFDA63]"
+          className="w-full sm:w-96 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         />
         <button
           onClick={() => void fetchUsers()}
-          className="rounded-lg px-4 py-2 font-medium text-white bg-[#D90429] hover:opacity-90"
+          className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-50"
         >
           Search
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-2xl border border-[#333333] bg-[#1E1E1E]">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-md">
         <table className="min-w-full text-sm">
-          <thead className="bg-[#333333] text-white">
+          <thead className="bg-slate-100 text-slate-700">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold">User</th>
-              <th className="px-4 py-3 text-left font-semibold">Email</th>
-              <th className="px-4 py-3 text-left font-semibold">State</th>
-              <th className="px-4 py-3 text-left font-semibold">Role</th>
-              <th className="px-4 py-3 text-left font-semibold">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold border-b border-slate-200">
+                User
+              </th>
+              <th className="px-4 py-3 text-left font-semibold border-b border-slate-200">
+                Email
+              </th>
+              <th className="px-4 py-3 text-left font-semibold border-b border-slate-200">
+                State
+              </th>
+              <th className="px-4 py-3 text-left font-semibold border-b border-slate-200">
+                Role
+              </th>
+              <th className="px-4 py-3 text-left font-semibold border-b border-slate-200">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/80">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-slate-500"
+                >
                   Loading users…
                 </td>
               </tr>
@@ -136,7 +151,10 @@ export default function UsersManagementPage() {
 
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-white/60">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-slate-500"
+                >
                   There are no users matching your search.
                 </td>
               </tr>
@@ -148,19 +166,22 @@ export default function UsersManagementPage() {
                 const busy = !!busyIds[u.id];
 
                 return (
-                  <tr key={u.id} className="border-t border-[#333333]">
-                    <td className="px-4 py-3 text-white font-medium">
+                  <tr
+                    key={u.id}
+                    className="border-t border-slate-200 hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-slate-900 font-medium">
                       {u.username || '—'}
                     </td>
-                    <td className="px-4 py-3 text-white/90">
+                    <td className="px-4 py-3 text-slate-700">
                       {u.email || '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        className={`px-2 py-1 rounded-full text-xs font-semibold border ${
                           u.enabled
-                            ? 'bg-green-700/30 text-green-300'
-                            : 'bg-gray-600/40 text-gray-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                            : 'bg-slate-100 text-slate-600 border-slate-300'
                         }`}
                       >
                         {u.enabled ? 'Active' : 'Inactive'}
@@ -180,13 +201,13 @@ export default function UsersManagementPage() {
                         <button
                           onClick={() => void toggleEnabled(u)}
                           disabled={busy || isAdmin}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border shadow-sm
                             ${
                               u.enabled
-                                ? 'bg-transparent text-white border-white/30 hover:bg-white/10'
-                                : 'bg-[#D90429] text-white border-[#D90429] hover:opacity-90'
+                                ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                                : 'bg-rose-600 text-white border-rose-600 hover:bg-rose-700'
                             }
-                            disabled:opacity-50`}
+                            disabled:opacity-50 disabled:cursor-not-allowed`}
                           title={
                             isAdmin
                               ? 'You cannot enable/disable an administrator.'
@@ -199,7 +220,7 @@ export default function UsersManagementPage() {
                         <button
                           onClick={() => void makeAdmin(u)}
                           disabled={busy || isAdmin}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#FFDA63] text-[#1E1E1E] hover:opacity-90 border border-[#FFDA63] disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 border border-indigo-600 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           title={
                             isAdmin ? 'Already admin' : 'Promote to admin'
                           }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStrict } from '../auth/AuthContext';
 
-export default function NavBar({ title = 'Cinema Management' }: { title?: string }) {
+export default function NavBar() {
   const { username, authenticated, hasRole, logout } = useAuthStrict();
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,70 +57,68 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
   const isScreeningsRoute = location.pathname.startsWith('/screenings');
 
   return (
-    <header className="w-full bg-[#1E1E1E]">
-      <div className="mx-auto max-w-7xl px-6 pt-6">
+    <header className="w-full bg-[#6366F1] shadow-md">
+      <div className="mx-auto max-w-7xl px-6 py-4">
         <nav
           aria-label="Top Navigation"
-          className="flex items-center justify-between rounded-2xl bg-[#D90429] px-5 py-3"
+          className="flex items-center justify-between"
         >
-          <Link to="/" className="text-xl font-bold tracking-wide text-white">
-            {title}
+          {/* Brand */}
+          <Link to="/catalog" className="flex items-center gap-2">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#FFDA63] text-[#1E1E1E] text-lg font-extrabold shadow">
+              C
+            </span>
+            <span className="text-xl font-semibold tracking-wide text-white">
+              Cinema Management
+            </span>
           </Link>
 
-          <div className="flex items-center gap-4">
-            {/* 🎞 Movies */}
+          {/* LINKS + USER */}
+          <div className="flex items-center gap-5">
+
+            {/* Admin Links */}
             {isAdmin && (
-              <Link
-                to="/movies"
-                className={`hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition
-                  ${
+              <>
+                <Link
+                  to="/movies"
+                  className={`text-sm font-medium px-3 py-1.5 rounded-lg transition ${
                     isMoviesRoute
-                      ? 'bg-[#FFDA63] text-[#1E1E1E] shadow-md'
-                      : 'text-white/90 hover:bg-[#BF0320] hover:text-white'
-                  }
-                `}
-              >
-                🎞 Movies
-              </Link>
-            )}
+                      ? "bg-white/20 text-white shadow"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  🎞 Movies
+                </Link>
 
-            {/* 🎭 Rooms */}
-            {isAdmin && (
-              <Link
-                to="/rooms"
-                className={`hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition
-                  ${
+                <Link
+                  to="/rooms"
+                  className={`text-sm font-medium px-3 py-1.5 rounded-lg transition ${
                     isRoomsRoute
-                      ? 'bg-[#FFDA63] text-[#1E1E1E] shadow-md'
-                      : 'text-white/90 hover:bg-[#BF0320] hover:text-white'
-                  }
-                `}
-              >
-                🎭 Rooms
-              </Link>
-            )}
+                      ? "bg-white/20 text-white shadow"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  🎭 Rooms
+                </Link>
 
-            {/* 🎟 Screenings */}
-            {isAdmin && (
-              <Link
-                to="/screenings"
-                className={`hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition
-                  ${
+                <Link
+                  to="/screenings"
+                  className={`text-sm font-medium px-3 py-1.5 rounded-lg transition ${
                     isScreeningsRoute
-                      ? 'bg-[#FFDA63] text-[#1E1E1E] shadow-md'
-                      : 'text-white/90 hover:bg-[#BF0320] hover:text-white'
-                  }
-                `}
-              >
-                🎟 Screenings
-              </Link>
+                      ? "bg-white/20 text-white shadow"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  🎟 Screenings
+                </Link>
+              </>
             )}
 
-            {/* Login / user menu */}
+            {/* LOGIN / USER MENU */}
             {!authenticated ? (
               <button
                 onClick={goLogin}
-                className="rounded-xl bg-[#FFDA63] px-4 py-2 text-sm font-semibold text-[#333333] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#FFDA63]/60"
+                className="rounded-xl bg-[#FFDA63] px-4 py-2 text-sm font-semibold text-[#1E1E1E] shadow-md hover:bg-[#F5C94E] transition"
               >
                 Login
               </button>
@@ -129,16 +127,18 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
                 <button
                   ref={buttonRef}
                   onClick={() => setOpen(v => !v)}
-                  className="flex items-center gap-3 rounded-full bg-[#333333] pl-2 pr-3 py-1 text-white"
+                  className="flex items-center gap-3 rounded-full bg-white/20 pl-2 pr-3 py-1 text-white shadow hover:bg-white/30 transition"
                 >
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFDA63] text-[#333333] text-sm font-bold">
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFDA63] text-[#1E1E1E] text-sm font-bold">
                     {initial}
                   </span>
-                  <span className="text-sm font-medium">{username}</span>
+                  <span className="text-sm font-medium max-w-[140px] truncate text-white">
+                    {username}
+                  </span>
                   <svg
-                    className={`h-4 w-4 transition ${open ? 'rotate-180' : ''}`}
-                    viewBox="0 0 20 20"
+                    className={`h-4 w-4 text-white transition-transform ${open ? "rotate-180" : ""}`}
                     fill="currentColor"
+                    viewBox="0 0 20 20"
                   >
                     <path
                       fillRule="evenodd"
@@ -151,24 +151,25 @@ export default function NavBar({ title = 'Cinema Management' }: { title?: string
                 {open && (
                   <div
                     ref={menuRef}
-                    className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-xl border border-[#333333] bg-[#1E1E1E] shadow-lg"
+                    className="absolute right-0 z-20 mt-2 w-56 rounded-xl overflow-hidden bg-white shadow-xl"
                   >
                     {isAdmin && (
                       <>
                         <button
                           onClick={goManageUsers}
-                          className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333]"
+                          className="block w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-100"
                         >
                           Manage Users
                         </button>
-                        <div className="h-px bg-[#333333]" />
+                        <div className="h-px bg-slate-200" />
                       </>
                     )}
+
                     <button
                       onClick={logout}
-                      className="block w-full px-4 py-3 text-left text-sm text-white hover:bg-[#333333]"
+                      className="block w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-100"
                     >
-                      logout
+                      Logout
                     </button>
                   </div>
                 )}

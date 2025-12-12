@@ -151,34 +151,34 @@ const ScreeningForm: React.FC = () => {
 
   if (loadingInitial) {
     return (
-      <main className="min-h-screen bg-[#1E1E1E] flex items-center justify-center px-4">
+      <main className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 border-4 border-[#FFDA63] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-300 text-sm">Loading screening data...</p>
+          <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-600 text-sm">Loading screening data...</p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] py-10 px-4">
+    <main className="py-8 px-4">
       <section className="max-w-xl mx-auto">
-        <div className="bg-[#2C2C2C] rounded-2xl border border-[#D90429] shadow-lg p-6 sm:p-8">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-6 sm:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               {isEditMode ? 'Edit Screening' : 'Add New Screening'}
             </h1>
-            <p className="text-xs text-gray-400 mt-1 uppercase tracking-[0.15em]">
+            <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.15em]">
               {isEditMode ? 'Update existing screening' : 'Create a new screening'}
             </p>
           </div>
 
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-[#FFDA63] to-transparent opacity-70 mb-6" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-6" />
 
           {/* Error */}
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <div className="mb-4 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {error}
             </div>
           )}
@@ -187,7 +187,7 @@ const ScreeningForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Movie */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Movie
               </label>
               <select
@@ -195,7 +195,7 @@ const ScreeningForm: React.FC = () => {
                 required
                 value={formData.movie_id}
                 onChange={handleChange}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="" disabled>
                   Select a movie...
@@ -210,7 +210,7 @@ const ScreeningForm: React.FC = () => {
 
             {/* Room */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Room
               </label>
               <select
@@ -218,7 +218,7 @@ const ScreeningForm: React.FC = () => {
                 required
                 value={formData.room_id}
                 onChange={handleChange}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="" disabled>
                   Select a room...
@@ -233,7 +233,7 @@ const ScreeningForm: React.FC = () => {
 
             {/* Date */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Date
               </label>
               <input
@@ -242,13 +242,13 @@ const ScreeningForm: React.FC = () => {
                 required
                 value={formData.date}
                 onChange={handleChange}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
             {/* Time */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Time
               </label>
               <input
@@ -257,13 +257,13 @@ const ScreeningForm: React.FC = () => {
                 required
                 value={formData.time}
                 onChange={handleChange}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
             {/* Price */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Price (optional)
               </label>
               <input
@@ -273,8 +273,8 @@ const ScreeningForm: React.FC = () => {
                 step="0.01"
                 value={formData.price}
                 onChange={handleChange}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
                 placeholder="e.g. 25.00"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -283,21 +283,22 @@ const ScreeningForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex justify-center items-center w-full rounded-xl bg-[#FFDA63] text-[#1E1E1E] text-sm font-semibold px-4 py-2 hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="inline-flex justify-center items-center w-full rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2 shadow-sm hover:bg-indigo-700 transition disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 border-2 border-[#1E1E1E] border-t-transparent rounded-full animate-spin" />
+                    <span className="h-4 w-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
                     Saving...
                   </span>
                 ) : (
                   'Save'
                 )}
               </button>
+
               <button
                 type="button"
                 onClick={() => navigate('/screenings')}
-                className="inline-flex justify-center items-center w-full rounded-xl border border-gray-500 text-sm font-semibold px-4 py-2 text-gray-200 hover:bg-gray-700/60 transition"
+                className="inline-flex justify-center items-center w-full rounded-xl border border-slate-300 text-sm font-semibold px-4 py-2 text-slate-700 hover:bg-slate-100 transition"
               >
                 Cancel
               </button>

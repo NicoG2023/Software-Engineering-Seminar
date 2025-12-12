@@ -83,29 +83,32 @@ const ScreeningList: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] py-10 px-4">
+    <main className="py-10 px-4">
       <section className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Screenings</h1>
-            <p className="text-xs text-gray-400 mt-1 uppercase tracking-[0.15em]">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Screenings
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.15em]">
               Admin management
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2 justify-end">
+            {/* Refresh */}
             <button
               type="button"
               onClick={handleRefresh}
-              className="inline-flex items-center justify-center rounded-xl border border-gray-500 text-sm font-semibold px-4 py-2 text-gray-200 hover:bg-gray-700/60 transition"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 text-sm font-semibold px-4 py-2 text-slate-700 hover:bg-slate-100 transition"
             >
               ⟳ Refresh
             </button>
 
             <RouterLink
               to="/screenings/new"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FFDA63] text-[#1E1E1E] text-sm font-semibold px-4 py-2 shadow hover:opacity-90 transition"
+              className="inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2 shadow hover:bg-indigo-700 transition"
             >
               <span className="mr-1 text-lg">＋</span>
               <span>Add Screening</span>
@@ -113,22 +116,22 @@ const ScreeningList: React.FC = () => {
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="bg-[#2C2C2C] border border-[#D90429] rounded-2xl p-5 mb-6 shadow-lg">
+        {/* Filters */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Filter Screenings</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Filter Screenings</h2>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)]">
+          <div className="grid gap-4 md:grid-cols-2">
             {/* Movie filter */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Movie
               </label>
               <select
                 value={movieFilter}
                 onChange={(e) => setMovieFilter(e.target.value)}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">All movies</option>
                 {movies.map((m) => (
@@ -141,13 +144,13 @@ const ScreeningList: React.FC = () => {
 
             {/* Room filter */}
             <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1 uppercase tracking-[0.15em]">
+              <label className="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-[0.15em]">
                 Room
               </label>
               <select
                 value={roomFilter}
                 onChange={(e) => setRoomFilter(e.target.value)}
-                className="w-full bg-[#1E1E1E] border border-gray-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FFDA63] focus:border-transparent"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">All rooms</option>
                 {rooms.map((r) => (
@@ -159,117 +162,78 @@ const ScreeningList: React.FC = () => {
             </div>
           </div>
 
-          {/* Botón Clear Filters */}
+          {/* Clear Filters */}
           <div className="mt-4 flex justify-end">
             <button
               type="button"
               onClick={handleClearFilters}
-              className="inline-flex items-center justify-center rounded-xl border border-gray-500 text-sm font-semibold px-4 py-2 text-gray-200 hover:bg-gray-700/60 transition"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 text-sm font-semibold px-4 py-2 text-slate-700 hover:bg-slate-100 transition"
             >
               ✧ Clear Filters
             </button>
           </div>
         </div>
 
-        {/* Tabla */}
-        <div className="bg-[#2C2C2C] rounded-2xl border border-gray-700 shadow-lg overflow-x-auto">
+        {/* Table */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-[#111111]">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  ID
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  Movie
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  Room
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  Date
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  Time
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  Price
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700">
-                  Available seats
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-200 border-b border-gray-700 text-center">
-                  Actions
-                </th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">ID</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">Movie</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">Room</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">Date</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">Time</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">Price</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200">Available seats</th>
+                <th className="px-4 py-3 font-semibold text-slate-700 border-b border-slate-200 text-center">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-6 text-center text-gray-300"
-                  >
+                  <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
                     Loading...
                   </td>
                 </tr>
               ) : filteredScreenings.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-6 text-center text-gray-400"
-                  >
+                  <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
                     No screenings found
                   </td>
                 </tr>
               ) : (
                 filteredScreenings.map((s) => {
                   const movieName =
-                    s.movie_title ||
-                    movies.find((m) => m.id === s.movie_id)?.title ||
-                    `Movie #${s.movie_id}`;
+                    s.movie_title || movies.find((m) => m.id === s.movie_id)?.title || `Movie #${s.movie_id}`;
+
                   const roomName =
-                    s.room_name ||
-                    rooms.find((r) => r.id === s.room_id)?.name ||
-                    `Room #${s.room_id}`;
+                    s.room_name || rooms.find((r) => r.id === s.room_id)?.name || `Room #${s.room_id}`;
 
                   return (
-                    <tr
-                      key={s.id}
-                      className="hover:bg-black/20 transition-colors"
-                    >
-                      <td className="px-4 py-3 border-b border-gray-700 text-gray-200">
-                        {s.id}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-white">
-                        {movieName}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-gray-200">
-                        {roomName}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-gray-200">
-                        {s.date}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-gray-200">
-                        {s.time}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-gray-200">
-                        {formatPrice(s.price ?? null)}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-gray-200">
-                        {s.available_seats}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-700 text-center">
+                    <tr key={s.id} className="hover:bg-slate-50 transition">
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-700">{s.id}</td>
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-900">{movieName}</td>
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-700">{roomName}</td>
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-700">{s.date}</td>
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-700">{s.time}</td>
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-700">{formatPrice(s.price)}</td>
+                      <td className="px-4 py-3 border-b border-slate-200 text-slate-700">{s.available_seats}</td>
+
+                      <td className="px-4 py-3 border-b border-slate-200 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <RouterLink
                             to={`/screenings/edit/${s.id}`}
-                            className="inline-flex items-center justify-center rounded-lg bg-[#FFDA63] text-[#1E1E1E] text-xs font-semibold px-3 py-1.5 hover:opacity-90 transition"
+                            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-indigo-700 transition"
                           >
                             ✏️ Edit
                           </RouterLink>
+
                           <button
                             type="button"
                             onClick={() => handleDelete(s.id)}
-                            className="inline-flex items-center justify-center rounded-lg bg-[#D90429] text-white text-xs font-semibold px-3 py-1.5 hover:bg-red-700 transition"
+                            className="inline-flex items-center justify-center rounded-lg bg-rose-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-rose-700 transition"
                           >
                             🗑️ Delete
                           </button>

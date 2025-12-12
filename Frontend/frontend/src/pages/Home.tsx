@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Button, Box, Paper, Grid } from '@mui/material'; // ✅ usamos Grid estable
+import { Typography, Button, Box, Paper, Grid } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
 const Home: React.FC = () => {

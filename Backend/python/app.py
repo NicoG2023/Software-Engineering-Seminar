@@ -71,12 +71,6 @@ app.register_blueprint(movies_bp, url_prefix="/api")
 app.register_blueprint(theater_rooms_bp, url_prefix="/api")
 app.register_blueprint(screenings_bp, url_prefix="/api")
 
-# Después de db.init_app(app) y de registrar blueprints
-with app.app_context():
-    db.create_all()
-    print("✅ Database tables created/verified at startup")
-
-
 # ---------------------------
 # CLI Commands
 # ---------------------------

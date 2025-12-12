@@ -15,6 +15,7 @@ import ScreeningList from '../pages/Admin/screenings/ScreeningList';
 import ScreeningForm from '../pages/Admin/screenings/ScreeningForm';
 import LoginPage from '../pages/Auth/LoginPage';
 import RegisterPage from '../pages/Auth/RegisterPage';
+import CatalogPage from '../pages/Catalog/CatalogPage';
 
 const router = createBrowserRouter([
   {
@@ -167,6 +168,10 @@ const router = createBrowserRouter([
       },
 
       { path: '404', element: <NotFound /> },
+      {
+        path: 'catalog',
+        element: <CatalogPage />,
+      },
     ],
   },
 ]);
